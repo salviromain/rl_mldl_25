@@ -16,11 +16,13 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         MujocoEnv.__init__(self, 4)
         utils.EzPickle.__init__(self)
 
-        self.original_masses = np.copy(self.sim.model.body_mass[1:])    # Default link masses
+
+        self.original_masses = np.copy(self.sim.model.body_mass[1:])
+        print("MASSES:", self.original_masses
+# Default link masses
 
         if domain == 'source':  # Source environment has an imprecise torso mass (-30% shift)
             self.sim.model.body_mass[1] *= 0.7
-            print("MASSES:", self.original_masses
 
     def set_random_parameters(self):
         """Set random masses"""
