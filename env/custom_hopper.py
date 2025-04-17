@@ -20,7 +20,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
         if domain == 'source':  # Source environment has an imprecise torso mass (-30% shift)
             self.sim.model.body_mass[1] *= 0.7
-        print("MASSES:", self.original_masses
+            print("MASSES:", self.original_masses
 
     def set_random_parameters(self):
         """Set random masses"""
