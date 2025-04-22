@@ -42,7 +42,7 @@ def main():
 
 			if render:
 				env.render()
-
+		print(f'episode {episode}: reward {reward}')
 	
 
 if __name__ == '__main__':
