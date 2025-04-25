@@ -39,10 +39,10 @@ def main():
 			action = env.action_space.sample()	# Sample random action
 		
 			state, reward, done, info = env.step(action)	# Step the simulator to the next timestep
-
 			if render:
 				env.render()
-		print(f'episode {episode}: reward {reward}')
+		#print(f'episode {episode}: reward {reward}')
+		print (state)
 	
 
 if __name__ == '__main__':
