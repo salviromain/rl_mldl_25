@@ -51,7 +51,6 @@ def main():
 		state = env.reset()  # Reset the environment and observe the initial state
 		first=True
 		while not done:  # Loop until the episode is over
-			print(state)
 			if first == True:
 				action, action_probabilities = agent.get_action(state)
 				first=False
@@ -59,7 +58,6 @@ def main():
 				action=next_action
 				action_probabilities=next_action_probabilities
 			previous_state = state
-
 			state, reward, done, info = env.step(action.detach().cpu().numpy())
 
 			agent.store_outcome(previous_state, state, action_probabilities, reward, done)

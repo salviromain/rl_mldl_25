@@ -125,7 +125,7 @@ class Agent(object):
 
         #
         # TASK 3:
-        print(states)
+        states=states.squeeze(0)
         state_action=torch.cat([states,action], dim=1)
         Q_value=self.get_critic(state_action)
         policy_loss = -(Q_value.squeeze(-1) * action_log_probs).mean()
