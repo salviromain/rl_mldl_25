@@ -125,7 +125,7 @@ class Agent(object):
 
         #
         # TASK 3:
-        action=action.to(self.train_device).squeeze(-1)
+        action=action.to(self.train_device).unsqueeze(0)
         state_action=torch.cat([states,action], dim=1)
         Q_value=self.get_critic(state_action)
         policy_loss = -(Q_value.squeeze(-1) * action_log_probs).mean()
@@ -135,10 +135,10 @@ class Agent(object):
         return        
 
     def update_critic(self, previous_action, action, previous_state, state, reward):
-        action=action.to(self.train_device).squeeze(-1)
-        previous_action=previous_action.to(self.train_device).squeeze(-1)
-        state=state.to(self.train_device).squeeze(-1)
-        previous_state=previous_state.to(self.train_device).squeeze(-1)
+        action=action.to(self.train_device).unsqueeze(0)
+        previous_action=previous_action.to(self.train_device).unsqueeze(0)
+        state=state.to(self.train_device).unsqueeze(0)
+        previous_state=previous_state.to(self.train_device).unsqueeze(0)
         delta=reward+self.gamma*self.get_critic(torch.cat([states,action], dim=1))-self.get_critic(torch.cat([previous_states,previous_action], dim=1))
         critic_loss=-(delta.squeeze(-1)*self.get_critic(torch.cat([previous_states,previous_action], dim=1))).mean()
         self.critic_optimizer.zero_grad()
