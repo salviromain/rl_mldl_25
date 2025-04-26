@@ -51,6 +51,7 @@ def main():
 		state = env.reset()  # Reset the environment and observe the initial state
 		first=True
 		while not done:  # Loop until the episode is over
+			print(state)
 			if first == True:
 				action, action_probabilities = agent.get_action(state)
 				first=False
