@@ -163,7 +163,7 @@ class Agent(object):
 
             return action, action_log_prob
     def get_critic(self, state_action):
-        x = torch.from_numpy(state_action).float().to(self.train_device)
+        x = state_action.float().to(self.train_device)
 
         value= self.critic(x)
         return value
