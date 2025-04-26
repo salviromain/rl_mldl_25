@@ -7,7 +7,7 @@ import torch
 import gym
 
 from env.custom_hopper import *
-from agent import Agent, Policy
+from agent import Agent, Policy, Critic
 
 
 def parse_args():
