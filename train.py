@@ -48,10 +48,14 @@ def main():
 		done = False
 		train_reward = 0
 		state = env.reset()  # Reset the environment and observe the initial state
-
+		first=True
 		while not done:  # Loop until the episode is over
-
-			action, action_probabilities = agent.get_action(state)
+			if first == True:
+				action, action_probabilities = agent.get_action(state)
+				first=False
+			else: 
+				action=next_action
+				action_probabilities=next_action_probabilities
 			previous_state = state
 
 			state, reward, done, info = env.step(action.detach().cpu().numpy())
@@ -59,6 +63,9 @@ def main():
 			agent.store_outcome(previous_state, state, action_probabilities, reward, done)
 
 			train_reward += reward
+			agent.update_policy(action)
+			next_action, next_action_probabilities = agent.get_action(state)
+			agent.update_critic(action, next_action, previous_state, state, reward)
 		
 		if (episode+1)%args.print_every == 0:
 			print('Training episode:', episode)
