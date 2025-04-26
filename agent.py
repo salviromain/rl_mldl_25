@@ -22,21 +22,21 @@ class Critic(torch.nn.Module):
         """
         # TASK 3: critic network for actor-critic algorithm
         input_dim = state_space + action_space
-        self.conv1 = nn.Conv1d(in_channels=1, out_channels=32, kernel_size=3)
-        self.conv2 = nn.Conv1d(32, 64, kernel_size=3)
-        self.conv3 = nn.Conv1d(64, 64, kernel_size=3)
+        self.conv1 = torch.nn.Conv1d(in_channels=1, out_channels=32, kernel_size=3)
+        self.conv2 = torch.nn.Conv1d(32, 64, kernel_size=3)
+        self.conv3 = torch.nn.Conv1d(64, 64, kernel_size=3)
 
         conv_out_dim = input_dim - 6  # 3 kernel_size=3 convoluzioni
-        self.fc1 = nn.Linear(64 * conv_out_dim, 128)
-        self.fc2 = nn.Linear(128, 1)
+        self.fc1 = torch.nn.Linear(64 * conv_out_dim, 128)
+        self.fc2 = torch.nn.Linear(128, 1)
 
         self.init_weights()
 
     def init_weights(self):
         for layer in [self.conv1, self.conv2, self.conv3, self.fc1, self.fc2]:
-            nn.init.zeros_(layer.weight)
+            torch.nn.init.zeros_(layer.weight)
             if layer.bias is not None:
-                nn.init.zeros_(layer.bias)
+                torch.nn.init.zeros_(layer.bias)
 
     def forward(self, state_action):
         x = state_action.unsqueeze(1)  # (batch_size, 1, input_dim)
