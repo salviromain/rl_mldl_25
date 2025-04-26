@@ -38,7 +38,8 @@ def main():
 	action_space_dim = env.action_space.shape[-1]
 
 	policy = Policy(observation_space_dim, action_space_dim)
-	agent = Agent(policy, device=args.device)
+	critic = Critic(observation_space_dim, action_space_dim)
+	agent = Agent(policy, critic, device=args.device)
 
     #
     # TASK 2 and 3: interleave data collection to policy updates
