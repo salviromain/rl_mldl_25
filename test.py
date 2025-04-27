@@ -33,8 +33,9 @@ def main():
 
 	policy = Policy(observation_space_dim, action_space_dim)
 	policy.load_state_dict(torch.load(args.model), strict=True)
+	critic=Critic(observation_space_dim, action_space_dim)
 
-	agent = Agent(policy, device=args.device)
+	agent = Agent(policy,critic, device=args.device)
 
 	for episode in range(args.episodes):
 		done = False
