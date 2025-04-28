@@ -63,8 +63,8 @@ def main():
 			agent.store_outcome(previous_state, state, action_probabilities, reward, done)
 
 			train_reward += reward
-			agent.update_policy(action)
 			next_action, next_action_probabilities = agent.get_action(state)
+			agent.update_policy(action)
 			agent.update_critic(action, next_action, previous_state, state, reward)
 		
 		if (episode+1)%args.print_every == 0:
