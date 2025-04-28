@@ -140,6 +140,7 @@ class Agent(object):
         state=torch.from_numpy(state).float().to(self.train_device).unsqueeze(0)
         previous_state=torch.from_numpy(previous_state).float().to(self.train_device).unsqueeze(0)
         delta=reward+self.gamma*self.get_critic(torch.cat([state,action], dim=1))-self.get_critic(torch.cat([previous_state,previous_action], dim=1))
+        print(delta)
         critic_loss=-(delta.squeeze(-1)*self.get_critic(torch.cat([previous_state,previous_action], dim=1))).mean()
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
