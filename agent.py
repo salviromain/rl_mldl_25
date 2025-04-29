@@ -115,18 +115,18 @@ class Agent(object):
         else:
             advantage = returns
 
-    policy_loss = -(action_log_probs * advantage.detach()).mean()
-
-    self.optimizer.zero_grad()
-    policy_loss.backward()
-    self.optimizer.step()
-
-    # Clean up
-    self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
-    if hasattr(self, "values"):
-        self.values = []
-
-    return policy_loss.item(), returns.sum().item()
+        policy_loss = -(action_log_probs * advantage.detach()).mean()
+    
+        self.optimizer.zero_grad()
+        policy_loss.backward()
+        self.optimizer.step()
+    
+        # Clean up
+        self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
+        if hasattr(self, "values"):
+            self.values = []
+    
+        return policy_loss.item(), returns.sum().item()
     
 
 
