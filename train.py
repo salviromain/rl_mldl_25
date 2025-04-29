@@ -29,6 +29,16 @@ def main():
 	print('Action space:', env.action_space)
 	print('State space:', env.observation_space)
 	print('Dynamics parameters:', env.get_parameters())
+	import wandb
+	import time
+	
+	wandb.init(project="reinforce-baseline", config={
+	"use_baseline": True,
+	"baseline_type": "value_function",  # or "constant"
+	"constant_baseline_value": 5.0,
+	"gamma": 0.99,
+	"algorithm": "REINFORCE"
+	})
 
 
 	"""
@@ -63,6 +73,20 @@ def main():
 		if (episode+1)%args.print_every == 0:
 			print('Training episode:', episode)
 			print('Episode return:', train_reward)
+		policy_loss, episode_return = agent.update_policy(
+		    use_baseline=wandb.config.use_baseline,
+		    baseline_type=wandb.config.baseline_type,
+		    constant_baseline=wandb.config.constant_baseline_value
+		)
+		
+		wandb.log({
+		    "episode": episode,
+		    "episode_return": episode_return,
+		    "policy_loss": policy_loss,
+		    "baseline_type": wandb.config.baseline_type,
+		    "use_baseline": wandb.config.use_baseline,
+		    "constant_baseline_value": wandb.config.constant_baseline_value if wandb.config.baseline_type == "constant" else None
+		})
 
 
 	torch.save(agent.policy.state_dict(), "model.mdl")
