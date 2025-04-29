@@ -88,7 +88,7 @@ class Agent(object):
         self.advantage = []
 
 
-    def update_policy(self, use_baseline=True, baseline_type="constant", constant_baseline=20.0):
+    def update_policy(self, use_baseline=True, constant_baseline=20.0):
 
         action_log_probs = torch.stack(self.action_log_probs, dim=0).to(self.train_device).squeeze(-1)
         states = torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
@@ -102,20 +102,14 @@ class Agent(object):
         returns = discount_rewards(rewards, self.gamma)
 
         if use_baseline:
-            if baseline_type == "constant":
-                baseline = constant_baseline
-                advantage = returns - baseline
-            elif baseline_type == "value_function":
-                if not hasattr(self, "values") or len(self.values) == 0:
-                    raise ValueError("No value estimates found for baseline_type='value_function'")
-                values = torch.stack(self.values).to(self.train_device).squeeze()
-                advantage = returns - values
-            else:
-                raise ValueError("Unknown baseline type")
+            advantage = returns - constant_baseline
         else:
             advantage = returns
+            
+            
 
-        policy_loss = -(action_log_probs * advantage.detach()).mean()
+        discount_factors = torch.tensor([self.gamma ** t for t in range(len(advantage))]).to(self.train_device)
+        policy_loss = -(discount_factors * action_log_probs * advantage.detach()).mean()
     
         self.optimizer.zero_grad()
         policy_loss.backward()
@@ -123,8 +117,6 @@ class Agent(object):
     
         # Clean up
         self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
-        if hasattr(self, "values"):
-            self.values = []
     
         return policy_loss.item(), returns.sum().item()
     
