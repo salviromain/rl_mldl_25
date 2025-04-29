@@ -66,7 +66,7 @@ def main():
         if (episode + 1) % args.print_every == 0:
             print(f"[{episode+1}] Returns - BS20: {episode_returns['BS20']:.2f} | NOBS: {episode_returns['NOBS']:.2f}")
 
-    torch.save(agent_bs.policy.state_dict(), "modelBS20.mdl")
+    torch.save(agent_bs.policy.state_dict(), "modelBS20mean.mdl")
     torch.save(agent_nobs.policy.state_dict(), "modelNOBS.mdl")
 
 if __name__ == '__main__':
