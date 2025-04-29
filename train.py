@@ -93,7 +93,7 @@ def main():
 		})
 
 
-	torch.save(agent.policy.state_dict(), "model2.mdl")
+	torch.save(agent.policy.state_dict(), "modelBS20.mdl")
 
 	
 
