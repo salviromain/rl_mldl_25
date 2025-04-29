@@ -108,8 +108,10 @@ class Agent(object):
             
             
 
-        discount_factors = torch.tensor([self.gamma ** t for t in range(len(advantage))]).to(self.train_device)
-        policy_loss = -(discount_factors * action_log_probs * advantage.detach()).mean()
+        #discount_factors = torch.tensor([self.gamma ** t for t in range(len(advantage))]).to(self.train_device)
+        #policy_loss = -(discount_factors * action_log_probs * advantage.detach()).mean()
+        policy_loss = -(action_log_probs * advantage.detach()).mean()
+
     
         self.optimizer.zero_grad()
         policy_loss.backward()
