@@ -78,8 +78,7 @@ def main():
 			print('Episode return:', train_reward)
 		policy_loss, episode_return = agent.update_policy(
 				    use_baseline=True,
-				    baseline_type="constant",  # NOT "value_function"
-				    constant_baseline=0.0      # or the average return if you want
+				    constant_baseline=20      # or the average return if you want
 		)
 
 		
