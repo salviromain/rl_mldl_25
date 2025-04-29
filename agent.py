@@ -85,13 +85,35 @@ class Agent(object):
         self.done = []
 
 
-    def update_policy(self):
+    def update_policy(self, use_baseline=True, baseline_type="value_function", constant_baseline=0.0):
+
         action_log_probs = torch.stack(self.action_log_probs, dim=0).to(self.train_device).squeeze(-1)
         states = torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
         next_states = torch.stack(self.next_states, dim=0).to(self.train_device).squeeze(-1)
         rewards = torch.stack(self.rewards, dim=0).to(self.train_device).squeeze(-1)
         done = torch.Tensor(self.done).to(self.train_device)
 
+        if use_baseline:
+            if baseline_type == "constant":
+                baseline = constant_baseline
+                advantage = returns - baseline
+            elif baseline_type == "value_function":
+                with torch.no_grad():
+                    values = torch.stack(self.values).to(self.train_device).squeeze()
+                    advantage = returns - values
+            else:
+                raise ValueError("Unknown baseline type")
+        else:
+            advantage = returns
+            
+        policy_loss = -(action_log_probs * advantage.detach()).mean()
+        self.optimizer.zero_grad()
+        policy_loss.backward()
+        self.optimizer.step()
+
+
+
+        
         self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
 
         #
@@ -101,16 +123,8 @@ class Agent(object):
         #   - compute gradients and step the optimizer
         #
 
-
-        #
-        # TASK 3:
-        #   - compute boostrapped discounted return estimates
-        #   - compute advantage terms
-        #   - compute actor loss and critic loss
-        #   - compute gradients and step the optimizer
-        #
-
-        return        
+        return policy_loss.item(), returns.sum().item()
+    
 
 
     def get_action(self, state, evaluation=False):
