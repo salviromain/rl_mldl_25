@@ -31,6 +31,7 @@ def main():
     agent_nobs = Agent(policy_nobs, device=args.device)
 
     for episode in range(args.n_episodes):
+        episode_returns={}
         for agent, label, use_bs, bs_val in [
             (agent_bs, 'BS20', True, 20.0),
             (agent_nobs, 'NOBS', False, 0.0)
@@ -50,6 +51,7 @@ def main():
                 use_baseline=use_bs,
                 constant_baseline=bs_val
             )
+            episode_returns[label] = episode_return
 
             wandb.log({
                 f"{label}/episode": episode,
@@ -60,7 +62,7 @@ def main():
             })
 
         if (episode + 1) % args.print_every == 0:
-            print(f"[{episode+1}] BS20 Return: {episode_return:.2f} | NOBS Return: {episode_return:.2f}")
+            print(f"[{episode+1}] BS20 Return: {episode_returns['BS20']:.2f} | NOBS Return: {episode_returns["NOBS"]:.2f}")
 
     torch.save(agent_bs.policy.state_dict(), "modelBS20.mdl")
     torch.save(agent_nobs.policy.state_dict(), "modelNOBS.mdl")
