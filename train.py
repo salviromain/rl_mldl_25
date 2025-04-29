@@ -32,13 +32,16 @@ def main():
 	import wandb
 	import time
 	
-	wandb.init(project="reinforce-baseline", config={
-	"use_baseline": True,
-	"baseline_type": "value_function",  # or "constant"
-	"constant_baseline_value": 5.0,
-	"gamma": 0.99,
-	"algorithm": "REINFORCE"
-	})
+	wandb.init(
+	    project="reinforce-baseline",
+	    config={
+	        "use_baseline": True,
+	        "baseline_type": "constant",         # <-- not "value_function"
+	        "constant_baseline_value": 5.0,      # or 0.0, or use dynamic mean
+	        "gamma": 0.99,
+	        "algorithm": "REINFORCE"
+	    }
+	)
 
 
 	"""
@@ -74,10 +77,11 @@ def main():
 			print('Training episode:', episode)
 			print('Episode return:', train_reward)
 		policy_loss, episode_return = agent.update_policy(
-		    use_baseline=wandb.config.use_baseline,
-		    baseline_type=wandb.config.baseline_type,
-		    constant_baseline=wandb.config.constant_baseline_value
+				    use_baseline=True,
+				    baseline_type="constant",  # NOT "value_function"
+				    constant_baseline=0.0      # or the average return if you want
 		)
+
 		
 		wandb.log({
 		    "episode": episode,
