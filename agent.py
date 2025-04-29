@@ -83,6 +83,9 @@ class Agent(object):
         self.action_log_probs = []
         self.rewards = []
         self.done = []
+        self.values = []
+        self.returns = []
+        self.advantage = []
 
 
     def update_policy(self, use_baseline=True, baseline_type="value_function", constant_baseline=0.0):
@@ -93,37 +96,37 @@ class Agent(object):
         rewards = torch.stack(self.rewards, dim=0).to(self.train_device).squeeze(-1)
         done = torch.Tensor(self.done).to(self.train_device)
 
+        
+
+        
+        returns = discount_rewards(rewards, self.gamma)
+
         if use_baseline:
             if baseline_type == "constant":
                 baseline = constant_baseline
                 advantage = returns - baseline
             elif baseline_type == "value_function":
-                with torch.no_grad():
-                    values = torch.stack(self.values).to(self.train_device).squeeze()
-                    advantage = returns - values
+                if not hasattr(self, "values") or len(self.values) == 0:
+                    raise ValueError("No value estimates found for baseline_type='value_function'")
+                values = torch.stack(self.values).to(self.train_device).squeeze()
+                advantage = returns - values
             else:
                 raise ValueError("Unknown baseline type")
         else:
             advantage = returns
-            
-        policy_loss = -(action_log_probs * advantage.detach()).mean()
-        self.optimizer.zero_grad()
-        policy_loss.backward()
-        self.optimizer.step()
 
+    policy_loss = -(action_log_probs * advantage.detach()).mean()
 
+    self.optimizer.zero_grad()
+    policy_loss.backward()
+    self.optimizer.step()
 
-        
-        self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
+    # Clean up
+    self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
+    if hasattr(self, "values"):
+        self.values = []
 
-        #
-        # TASK 2:
-        #   - compute discounted returns
-        #   - compute policy gradient loss function given actions and returns
-        #   - compute gradients and step the optimizer
-        #
-
-        return policy_loss.item(), returns.sum().item()
+    return policy_loss.item(), returns.sum().item()
     
 
 
