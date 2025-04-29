@@ -12,8 +12,8 @@ from agent import Agent, Policy
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n-episodes', default=100000, type=int, help='Number of training episodes')
-    parser.add_argument('--print-every', default=20000, type=int, help='Print info every <> episodes')
+    parser.add_argument('--n-episodes', default=40000, type=int, help='Number of training episodes')
+    parser.add_argument('--print-every', default=5000, type=int, help='Print info every <> episodes')
     parser.add_argument('--device', default='cpu', type=str, help='network device [cpu, cuda]')
 
     return parser.parse_args()
@@ -37,7 +37,7 @@ def main():
 	    config={
 	        "use_baseline": True,
 	        "baseline_type": "constant",         # <-- not "value_function"
-	        "constant_baseline_value": 5.0,      # or 0.0, or use dynamic mean
+	        "constant_baseline_value": 20.0,      # or 0.0, or use dynamic mean
 	        "gamma": 0.99,
 	        "algorithm": "REINFORCE"
 	    }
@@ -93,7 +93,7 @@ def main():
 		})
 
 
-	torch.save(agent.policy.state_dict(), "model.mdl")
+	torch.save(agent.policy.state_dict(), "model2.mdl")
 
 	
 
