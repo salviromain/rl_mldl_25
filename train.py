@@ -48,7 +48,6 @@ def main():
 
             policy_loss, episode_return = agent.update_policy(
                 use_baseline=use_bs,
-                baseline_type="constant",
                 constant_baseline=bs_val
             )
 
