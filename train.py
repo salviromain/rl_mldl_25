@@ -48,7 +48,7 @@ def main():
                 agent.store_outcome(state, next_state, log_prob, reward, done)
                 state = next_state
                 train_reward += reward
-                step+=1
+                steps+=1
 
             policy_loss, episode_return = agent.update_policy(
                 use_baseline=use_bs,
