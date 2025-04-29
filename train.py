@@ -7,8 +7,8 @@ import wandb
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n-episodes', default=40000, type=int)
-    parser.add_argument('--print-every', default=5000, type=int)
+    parser.add_argument('--n-episodes', default=30000, type=int)
+    parser.add_argument('--print-every', default=3000, type=int)
     parser.add_argument('--device', default='cpu', type=str)
     return parser.parse_args()
 
@@ -54,15 +54,14 @@ def main():
             episode_returns[label] = episode_return
 
             wandb.log({
-                f"{label}/episode": episode,
                 f"{label}/episode_return": episode_return,
                 f"{label}/policy_loss": policy_loss,
                 f"{label}/use_baseline": use_bs,
-                f"{label}/constant_baseline_value": bs_val
-            })
+                f"{label}/constant_baseline_value": bs_val,
+                }, step=episode)
 
         if (episode + 1) % args.print_every == 0:
-            print(f"[{episode+1}] BS20 Return: {episode_returns['BS20']:.2f} | NOBS Return: {episode_returns["NOBS"]:.2f}")
+            print(f"[{episode+1}] Returns - BS20: {episode_returns['BS20']:.2f} | NOBS: {episode_returns['NOBS']:.2f}")
 
     torch.save(agent_bs.policy.state_dict(), "modelBS20.mdl")
     torch.save(agent_nobs.policy.state_dict(), "modelNOBS.mdl")
