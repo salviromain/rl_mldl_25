@@ -13,8 +13,8 @@ def discount_rewards(r, gamma):
     return discounted_r
 
 class Critic(torch.nn.Module):
-    def _init_(self, state_space):
-        super()._init_()
+    def __init__(self, state_space):
+        super().__init__()
         self.state_space = state_space
         """
             Critic network
@@ -35,14 +35,14 @@ class Critic(torch.nn.Module):
         if isinstance(m, torch.nn.Linear):
             torch.nn.init.xavier_uniform_(m.weight)
             if m.bias is not None:
-                torch.init.zeros_(m.bias)
+                torch.nn.init.zeros_(m.bias)
     def forward(self, state):
         value=self.model(state)
         return value
 
 class Policy(torch.nn.Module):
-    def _init_(self, state_space, action_space):
-        super()._init_()
+    def __init__(self, state_space, action_space):
+        super().__init__()
         self.state_space = state_space
         self.action_space = action_space
         self.hidden = 64
@@ -83,7 +83,7 @@ class Policy(torch.nn.Module):
         return normal_dist
 
 class Agent(object):
-    def _init_(self, policy,critic, device='cpu'):
+    def __init__(self, policy,critic, device='cpu'):
         self.train_device = device
         self.policy = policy.to(self.train_device)
         self.critic = critic.to(self.train_device)
@@ -122,21 +122,24 @@ class Agent(object):
         # TASK 3:
         v_next = self.get_critic(next_states)
         v_next = (1 - done) * v_next  # zero-out terminal states
-        v=self.get_critic(state)
+        v=self.get_critic(states)
         delta=rewards+self.gamma*v_next-v
         policy_loss=I*delta*action_log_probs
         self.optimizer.zero_grad()
         policy_loss.backward()
         self.optimizer.step()
-        I = gamma*I
+        I = self.gamma*I
         wandb.log({"policy_loss":policy_loss.item()})
         #wandb.log({"Q_value":Q_value.item()})
 
         return delta, v, I
 
     def update_critic(self, delta, v, state):
+
+        v=v.requires_grad_()
         critic_loss=delta*v
         self.optimizer.zero_grad()
+        critic_loss = critic_loss.mean()
         critic_loss.backward()
         wandb.log({"critic_loss":critic_loss.item()})
         self.critic_optimizer.step()
