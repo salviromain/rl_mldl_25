@@ -35,7 +35,7 @@ def main():
         episode_returns={}
         for agent, label, use_bs, bs_val in [
             (agent_bs, 'BS20', True, 20.0),
-            (agent_nobs, 'NOBS', False, 0.0)
+            #(agent_nobs, 'NOBS', False, 0.0)
         ]:
             done = False
             train_reward = 0
@@ -66,7 +66,7 @@ def main():
         if (episode + 1) % args.print_every == 0:
             print(f"[{episode+1}] Returns - BS20: {episode_returns['BS20']:.2f} | NOBS: {episode_returns['NOBS']:.2f}")
 
-    torch.save(agent_bs.policy.state_dict(), "modelBS20mean.mdl")
+    torch.save(agent_bs.policy.state_dict(), "modelBS202.mdl")
     torch.save(agent_nobs.policy.state_dict(), "modelNOBS.mdl")
 
 if __name__ == '__main__':
