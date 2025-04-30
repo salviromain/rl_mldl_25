@@ -97,7 +97,7 @@ class Agent(object):
         self.done = []
 
 
-    def update_policy(self,I):
+    def update_policy(self,I, delta):
         action_log_probs = torch.stack(self.action_log_probs, dim=0).to(self.train_device).squeeze(-1)
 
         states = torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
@@ -108,7 +108,7 @@ class Agent(object):
 
         done = torch.Tensor(self.done).to(self.train_device)
 
-        self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], []
+        self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
 
         #
         # TASK 2:
@@ -120,30 +120,31 @@ class Agent(object):
 
         #
         # TASK 3:
-        v_next = self.get_critic(next_states)
-        v_next = (1 - done) * v_next  # zero-out terminal states
-        v=self.get_critic(states)
-        delta=rewards+self.gamma*v_next-v
         policy_loss=I*delta*action_log_probs
         self.optimizer.zero_grad()
         policy_loss.backward()
         self.optimizer.step()
-        I = self.gamma*I
+        I=self.gamma*I
         wandb.log({"policy_loss":policy_loss.item()})
         #wandb.log({"Q_value":Q_value.item()})
 
-        return delta.detach(), I
+        return I
 
-    def update_critic(self, delta):
+    def update_critic(self):
         state = torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
+        next_states = torch.stack(self.next_states, dim=0).to(self.train_device).squeeze(-1)
+        done = torch.Tensor(self.done).to(self.train_device)
+        rewards = torch.stack(self.rewards, dim=0).to(self.train_device).squeeze(-1)
+        v_next = self.get_critic(next_states)
+        v_next = (1 - done) * v_next
         v=self.get_critic(state)
-        self.states=[]
+        delta=rewards+self.gamma*v_next-v
         critic_loss=(delta*v)
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         wandb.log({"critic_loss":critic_loss.item()})
         self.critic_optimizer.step()
-
+        return delta.detach
 
         
 
