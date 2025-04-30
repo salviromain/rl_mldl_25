@@ -136,7 +136,7 @@ class Agent(object):
 
     def update_critic(self, delta):
         state = torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
-        v=get_critic(state)
+        v=self.get_critic(state)
         self.states=[]
         critic_loss=(delta*v)
         self.critic_optimizer.zero_grad()
