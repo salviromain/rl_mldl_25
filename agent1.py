@@ -120,6 +120,7 @@ class Agent(object):
 
         #
         # TASK 3:
+        delta = (delta - delta.mean()) / (delta.std() + 1e-8)
         policy_loss = -(I * delta.detach() * action_log_probs).mean()
         self.optimizer.zero_grad()
         policy_loss.backward()
