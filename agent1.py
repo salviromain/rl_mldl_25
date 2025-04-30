@@ -144,7 +144,7 @@ class Agent(object):
         critic_loss = F.mse_loss(v, target.detach())
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=5.0)
+        #torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=5.0)
         wandb.log({"critic_loss":critic_loss.item()})
         self.critic_optimizer.step()
         return delta.detach()
