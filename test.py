@@ -10,7 +10,7 @@ from agent import Agent, Policy, Critic
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='model3.mdl', type=str, help='Model path')
+    parser.add_argument('--model', default='model_critic_modified.mdl', type=str, help='Model path')
     parser.add_argument('--device', default='cpu', type=str, help='network device [cpu, cuda]')
     parser.add_argument('--render', default=False, action='store_true', help='Render the simulator')
     parser.add_argument('--episodes', default=10, type=int, help='Number of test episodes')

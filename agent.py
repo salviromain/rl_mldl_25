@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import wandb
 import torch.nn.functional as F
 from torch.distributions import Normal
 
@@ -34,7 +35,7 @@ class Critic(torch.nn.Module):
 
     def init_weights(self):
         for layer in [self.conv1, self.conv2, self.conv3, self.fc1, self.fc2]:
-            torch.nn.init.zeros_(layer.weight)
+            torch.nn.init.xavier_uniform_(layer.weight)
             if layer.bias is not None:
                 torch.nn.init.zeros_(layer.bias)
 
@@ -97,7 +98,7 @@ class Agent(object):
         self.policy = policy.to(self.train_device)
         self.critic = critic.to(self.train_device)
         self.optimizer = torch.optim.Adam(policy.parameters(), lr=1e-3)
-        self.critic_optimizer = torch.optim.Adam(critic.parameters(), lr=1e-2)
+        self.critic_optimizer = torch.optim.Adam(critic.parameters(), lr=1e-3)
         self.gamma = 0.99
         self.states = []
         self.next_states = []
@@ -108,9 +109,13 @@ class Agent(object):
 
     def update_policy(self,action):
         action_log_probs = torch.stack(self.action_log_probs, dim=0).to(self.train_device).squeeze(-1)
+
         states = torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
+
         next_states = torch.stack(self.next_states, dim=0).to(self.train_device).squeeze(-1)
+
         rewards = torch.stack(self.rewards, dim=0).to(self.train_device).squeeze(-1)
+
         done = torch.Tensor(self.done).to(self.train_device)
 
         self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
@@ -126,24 +131,49 @@ class Agent(object):
         #
         # TASK 3:
         action=action.to(self.train_device).unsqueeze(0)
+
         state_action=torch.cat([states,action], dim=1)
+
         Q_value=self.get_critic(state_action)
+
         policy_loss = -(Q_value.squeeze(-1) * action_log_probs).mean()
         self.optimizer.zero_grad()
         policy_loss.backward()
         self.optimizer.step()
+
+        wandb.log({"policy_loss":policy_loss.item()})
+        #wandb.log({"Q_value":Q_value.item()})
+
         return        
 
     def update_critic(self, previous_action, action, previous_state, state, reward):
+
         action=action.to(self.train_device).unsqueeze(0)
+
         previous_action=previous_action.to(self.train_device).unsqueeze(0)
+
         state=torch.from_numpy(state).float().to(self.train_device).unsqueeze(0)
+
         previous_state=torch.from_numpy(previous_state).float().to(self.train_device).unsqueeze(0)
-        delta=reward+self.gamma*self.get_critic(torch.cat([state,action], dim=1))-self.get_critic(torch.cat([previous_state,previous_action], dim=1))
-        critic_loss=-(delta.squeeze(-1)*self.get_critic(torch.cat([previous_state,previous_action], dim=1))).mean()
+
+        Q_sa = self.get_critic(torch.cat([previous_state, previous_action], dim=1))  # Q(s, a)
+        Q_sa_next = self.get_critic(torch.cat([state, action], dim=1))  # Q(s', a')
+
+        # TD error
+        delta = reward + self.gamma * Q_sa_next.detach() - Q_sa
+
+        # Backward pass: we want to ascend ∇_w (delta * Q(s, a))
+        critic_loss = -delta * Q_sa  # Perché PyTorch minimizza, quindi mettiamo il -
+        critic_loss = critic_loss.mean()  # se vuoi batch
+
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+       
+        wandb.log({"critic_loss":critic_loss.item()})
+
         self.critic_optimizer.step()
+
+        
 
 
     def get_action(self, state, evaluation=False):
