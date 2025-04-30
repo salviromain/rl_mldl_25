@@ -144,7 +144,7 @@ class Agent(object):
         critic_loss.backward()
         wandb.log({"critic_loss":critic_loss.item()})
         self.critic_optimizer.step()
-        return delta.detach
+        return delta.detach()
 
         
 
