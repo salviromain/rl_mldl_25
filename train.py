@@ -34,8 +34,8 @@ def main():
         
         episode_returns={}
         for agent, label, use_bs, bs_val in [
-            (agent_bs, 'BS50', True, 50.0),
-            (agent_nobs, 'BS80', True, 80.0)
+            (agent_bs, 'BS30', True, 30.0),
+            #(agent_nobs, 'BS80', True, 80.0)
         ]:
             done = False
             train_reward = 0
@@ -64,10 +64,11 @@ def main():
             f"{label}/episode_steps": steps,
             }, step=episode)
         if (episode + 1) % args.print_every == 0:
-            print(f"[{episode+1}] Returns - BS50: {episode_returns['BS50']:.2f} | BS80: {episode_returns['BS80']:.2f}")
+            print(f"[{episode+1}] Returns - BS30: {episode_returns['BS30']:.2f} | BS30: {episode_returns['BS30']:.2f}")
 
-    torch.save(agent_bs.policy.state_dict(), "BS50.mdl")
-    torch.save(agent_nobs.policy.state_dict(), "BS80.mdl")
+    #torch.save(agent_bs.policy.state_dict(), "BS50.mdl")
+    #torch.save(agent_nobs.policy.state_dict(), "BS80.mdl")
+    torch.save(agent_nobs.policy.state_dict(), "BS30.mdl")
 
 if __name__ == '__main__':
     main()
