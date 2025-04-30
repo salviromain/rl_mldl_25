@@ -7,7 +7,7 @@ import wandb
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n-episodes', default=4000, type=int)
+    parser.add_argument('--n-episodes', default=10000, type=int)
     parser.add_argument('--print-every', default=2000, type=int)
     parser.add_argument('--device', default='cpu', type=str)
     return parser.parse_args()
@@ -34,8 +34,8 @@ def main():
         
         episode_returns={}
         for agent, label, use_bs, bs_val in [
-            (agent_bs, 'BS40', True, 40.0),
-            (agent_nobs, 'BS60', True, 60.0)
+            (agent_bs, 'BS50', True, 50.0),
+            (agent_nobs, 'BS80', True, 80.0)
         ]:
             done = False
             train_reward = 0
@@ -64,10 +64,10 @@ def main():
             f"{label}/episode_steps": steps,
             }, step=episode)
         if (episode + 1) % args.print_every == 0:
-            print(f"[{episode+1}] Returns - BS40: {episode_returns['BS40']:.2f} | BS60: {episode_returns['BS60']:.2f}")
+            print(f"[{episode+1}] Returns - BS50: {episode_returns['BS50']:.2f} | BS80: {episode_returns['BS80']:.2f}")
 
-    torch.save(agent_bs.policy.state_dict(), "BS40.mdl")
-    torch.save(agent_nobs.policy.state_dict(), "BS60.mdl")
+    torch.save(agent_bs.policy.state_dict(), "BS50.mdl")
+    torch.save(agent_nobs.policy.state_dict(), "BS80.mdl")
 
 if __name__ == '__main__':
     main()
