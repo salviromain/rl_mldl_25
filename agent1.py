@@ -108,7 +108,7 @@ class Agent(object):
 
         done = torch.Tensor(self.done).to(self.train_device)
 
-        self.state,self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], []
+        self.state,self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
 
         #
         # TASK 2:
