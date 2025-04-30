@@ -4,7 +4,6 @@ import wandb
 import torch.nn.functional as F
 from torch.distributions import Normal
 
-
 def discount_rewards(r, gamma):
     discounted_r = torch.zeros_like(r)
     running_add = 0
@@ -14,40 +13,33 @@ def discount_rewards(r, gamma):
     return discounted_r
 
 class Critic(torch.nn.Module):
-    def _init_(self, state_space, action_space):
+    def _init_(self, state_space):
         super()._init_()
         self.state_space = state_space
-        self.action_space = action_space
         """
             Critic network
         """
         # TASK 3: critic network for actor-critic algorithm
-        input_dim = state_space + action_space
-        self.conv1 = torch.nn.Conv1d(in_channels=1, out_channels=32, kernel_size=3)
-        self.conv2 = torch.nn.Conv1d(32, 64, kernel_size=3)
-        self.conv3 = torch.nn.Conv1d(64, 64, kernel_size=3)
+        self.model=torch.nn.Sequential(
+            torch.nn.Linear(self.state_space, 64),
+            torch.nn.ReLU(),
+            torch.nn.Linear(64, 32),
+            torch.nn.ReLU(),
+            torch.nn.Linear(32, 1),
+        )
 
-        conv_out_dim = input_dim - 6  # 3 kernel_size=3 convoluzioni
-        self.fc1 = torch.nn.Linear(64 * conv_out_dim, 128)
-        self.fc2 = torch.nn.Linear(128, 1)
 
-        self.init_weights()
+        self.model.apply(self.init_weights)
 
-    def init_weights(self):
-        for layer in [self.conv1, self.conv2, self.conv3, self.fc1, self.fc2]:
-            torch.nn.init.xavier_uniform_(layer.weight)
-            if layer.bias is not None:
-                torch.nn.init.zeros_(layer.bias)
-
-    def forward(self, state_action):
-        x = state_action.unsqueeze(1)  # (batch_size, 1, input_dim)
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
-        x = x.view(x.size(0), -1)  # flatten
-        x = F.relu(self.fc1(x))
-        value = self.fc2(x)
+    def init_weights(self,m):
+        if isinstance(m, torch.nn.Linear):
+            torch.nn.init.xavier_uniform_(m.weight)
+            if m.bias is not None:
+                torch.init.zeros_(m.bias)
+    def forward(self, state):
+        value=self.model(state)
         return value
+
 class Policy(torch.nn.Module):
     def _init_(self, state_space, action_space):
         super()._init_()
@@ -90,8 +82,6 @@ class Policy(torch.nn.Module):
         normal_dist = Normal(action_mean, sigma)
         return normal_dist
 
-
-
 class Agent(object):
     def _init_(self, policy,critic, device='cpu'):
         self.train_device = device
@@ -107,7 +97,7 @@ class Agent(object):
         self.done = []
 
 
-    def update_policy(self,action):
+    def update_policy(self,I):
         action_log_probs = torch.stack(self.action_log_probs, dim=0).to(self.train_device).squeeze(-1)
 
         states = torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
@@ -130,48 +120,27 @@ class Agent(object):
 
         #
         # TASK 3:
-        action=action.to(self.train_device).unsqueeze(0)
-
-        state_action=torch.cat([states,action], dim=1)
-
-        Q_value=self.get_critic(state_action)
-
-        policy_loss = -(Q_value.squeeze(-1) * action_log_probs).mean()
+        v_next = self.get_critic(next_states)
+        v_next = (1 - done) * v_next  # zero-out terminal states
+        v=self.get_critic(state)
+        delta=rewards+self.gamma*v_next-v
+        policy_loss=I*delta*action_log_probs
         self.optimizer.zero_grad()
         policy_loss.backward()
         self.optimizer.step()
-
+        I = gamma*I
         wandb.log({"policy_loss":policy_loss.item()})
         #wandb.log({"Q_value":Q_value.item()})
 
-        return        
+        return delta, v, I
 
-    def update_critic(self, previous_action, action, previous_state, state, reward):
-
-        action=action.to(self.train_device).unsqueeze(0)
-
-        previous_action=previous_action.to(self.train_device).unsqueeze(0)
-
-        state=torch.from_numpy(state).float().to(self.train_device).unsqueeze(0)
-
-        previous_state=torch.from_numpy(previous_state).float().to(self.train_device).unsqueeze(0)
-
-        Q_sa = self.get_critic(torch.cat([previous_state, previous_action], dim=1))  # Q(s, a)
-        Q_sa_next = self.get_critic(torch.cat([state, action], dim=1))  # Q(s', a')
-
-        # TD error
-        delta = reward + self.gamma * Q_sa_next.detach() - Q_sa
-
-        # Backward pass: we want to ascend ∇_w (delta * Q(s, a))
-        critic_loss = -delta * Q_sa  # Perché PyTorch minimizza, quindi mettiamo il -
-        critic_loss = critic_loss.mean()  # se vuoi batch
-
-        self.critic_optimizer.zero_grad()
+    def update_critic(self, delta, v, state):
+        critic_loss=delta*v
+        self.optimizer.zero_grad()
         critic_loss.backward()
-       
         wandb.log({"critic_loss":critic_loss.item()})
-
         self.critic_optimizer.step()
+
 
         
 
@@ -192,8 +161,8 @@ class Agent(object):
             action_log_prob = normal_dist.log_prob(action).sum()
 
             return action, action_log_prob
-    def get_critic(self, state_action):
-        x = state_action.float().to(self.train_device)
+    def get_critic(self, state):
+        x = state.float().to(self.train_device)
 
         value= self.critic(x)
         return value

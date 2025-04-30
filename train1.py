@@ -8,7 +8,7 @@ import gym
 import wandb
 
 from env.custom_hopper import *
-from agent import Agent, Policy, Critic
+from agent1 import Agent, Policy, Critic
 
 
 def parse_args():
@@ -26,7 +26,7 @@ wandb.init(project="hopper-rl", config={
     "print_every": args.print_every,
     "device": args.device,
     "lr_policy": 1e-3,
-    "lr_critic": 1e-2,
+    "lr_critic": 1e-3,
     "gamma": 0.99
 })
 
@@ -47,7 +47,7 @@ def main():
 	action_space_dim = env.action_space.shape[-1]
 
 	policy = Policy(observation_space_dim, action_space_dim)
-	critic = Critic(observation_space_dim, action_space_dim)
+	critic = Critic(observation_space_dim)
 	agent = Agent(policy, critic, device=args.device)
 
     #
@@ -56,33 +56,40 @@ def main():
 
 	for episode in range(args.n_episodes):
 		done = False
+
 		train_reward = 0
+		
 		state = env.reset()  # Reset the environment and observe the initial state
-		first=True
+		
+		I=1
+		
 		while not done:  # Loop until the episode is over
-			if first == True:
-				action, action_probabilities = agent.get_action(state)
-				first=False
-			else: 
-				action=next_action
-				action_probabilities=next_action_probabilities
+		
+			action, action_log_prob=agent.get_action(state)
+		
 			previous_state = state
+		
 			state, reward, done, info = env.step(action.detach().cpu().numpy())
 
-			agent.store_outcome(previous_state, state, action_probabilities, reward, done)
+			agent.store_outcome(previous_state, state, action_log_prob, reward, done)
 
 			train_reward += reward
-			agent.update_policy(action)
-			next_action, next_action_probabilities = agent.get_action(state)
-			agent.update_critic(action, next_action, previous_state, state, reward)
+
+			delta, v , I= agent.update_policy(I)
+
+			agent.update_critic(delta, v , previous_state)
+
+
 		wandb.log({"episode":episode,"return":train_reward})
 		
 		if (episode+1)%args.print_every == 0:
+
 			print('Training episode:', episode)
+
 			print('Episode return:', train_reward)
 
 
-	torch.save(agent.policy.state_dict(), "model_critic_modified.mdl")
+	torch.save(agent.policy.state_dict(), "model_new_pseudocode.mdl")
 	wandb.save("model_critic_modified")
 	wandb.finish()
 	
