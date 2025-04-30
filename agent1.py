@@ -120,7 +120,7 @@ class Agent(object):
 
         #
         # TASK 3:
-        delta = (delta - delta.mean()) / (delta.std() + 1e-8)
+        ##delta = (delta - delta.mean()) / (delta.std() + 1e-8)
         policy_loss = -(I * delta.detach() * action_log_probs).mean()
         self.optimizer.zero_grad()
         policy_loss.backward()
@@ -141,7 +141,7 @@ class Agent(object):
         v=self.get_critic(state)
         delta=rewards+self.gamma*v_next-v
         target = rewards + self.gamma * v_next
-        critic_loss = F.mse_loss(v, target.detach())
+        critic_loss = delta*F.mse_loss(v, target.detach())
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         wandb.log({"critic_loss":critic_loss.item()})
