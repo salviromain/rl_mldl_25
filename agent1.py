@@ -139,7 +139,7 @@ class Agent(object):
         self.state=[]
         v=self.get_critic(state)
         critic_loss=delta*v
-        self.optimizer.zero_grad()
+        self.critic_optimizer.zero_grad()
         critic_loss.backward()
         wandb.log({"critic_loss":critic_loss.item()})
         self.critic_optimizer.step()
