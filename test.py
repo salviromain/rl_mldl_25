@@ -45,7 +45,7 @@ def main():
 
 			action, _ = agent.get_action(state, evaluation=True)
 
-			state, reward, done, info = env.step(action.detach().cpu().numpy())
+			state, reward, done, info = env.step()
 
 			if args.render:
 				env.render()
