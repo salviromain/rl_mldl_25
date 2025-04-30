@@ -88,7 +88,7 @@ class Agent(object):
         self.policy = policy.to(self.train_device)
         self.critic = critic.to(self.train_device)
         self.optimizer = torch.optim.Adam(policy.parameters(), lr=1e-3)
-        self.critic_optimizer = torch.optim.Adam(critic.parameters(), lr=1e-3)
+        self.critic_optimizer = torch.optim.Adam(critic.parameters(), lr=1e-4)
         self.gamma = 0.99
         self.states = []
         self.next_states = []
@@ -144,6 +144,7 @@ class Agent(object):
         critic_loss = F.mse_loss(v, target.detach())
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=5.0)
         wandb.log({"critic_loss":critic_loss.item()})
         self.critic_optimizer.step()
         return delta.detach()

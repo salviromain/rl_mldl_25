@@ -26,7 +26,7 @@ wandb.init(project="hopper-rl", config={
     "print_every": args.print_every,
     "device": args.device,
     "lr_policy": 1e-3,
-    "lr_critic": 1e-3,
+    "lr_critic": 1e-4,
     "gamma": 0.99
 })
 
