@@ -75,7 +75,7 @@ def main():
 
 			train_reward += reward
 
-			delta=agent.update_critic(delta)
+			delta=agent.update_critic()
 
 			I= agent.update_policy(I,delta)
 
