@@ -95,8 +95,6 @@ class Agent(object):
         next_states = torch.stack(self.next_states, dim=0).to(self.train_device).squeeze(-1)
         rewards = torch.stack(self.rewards, dim=0).to(self.train_device).squeeze(-1)
         done = torch.Tensor(self.done).to(self.train_device)
-        #da togliere
-        constant_baseline = 40
 
         
 
