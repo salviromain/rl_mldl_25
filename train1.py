@@ -77,7 +77,7 @@ def main():
 
 			delta, v , I= agent.update_policy(I)
 
-			agent.update_critic(delta , previous_state)
+			agent.update_critic(delta ,  previous_state, v)
 
 
 		wandb.log({"episode":episode,"return":train_reward})
