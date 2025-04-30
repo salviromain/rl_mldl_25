@@ -135,7 +135,7 @@ class Agent(object):
         return delta, v, I
 
     def update_critic(self, delta, state):
-         v=self.get_critic(state)
+        v=self.get_critic(state)
         critic_loss=delta*v
         self.optimizer.zero_grad()
         critic_loss.backward()
