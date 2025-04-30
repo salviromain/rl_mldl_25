@@ -108,7 +108,7 @@ class Agent(object):
 
         done = torch.Tensor(self.done).to(self.train_device)
 
-        self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
+        self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], []
 
         #
         # TASK 2:
@@ -135,6 +135,8 @@ class Agent(object):
         return delta, v, I
 
     def update_critic(self, delta, state):
+        state=torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
+        self.state=[]
         v=self.get_critic(state)
         critic_loss=delta*v
         self.optimizer.zero_grad()
