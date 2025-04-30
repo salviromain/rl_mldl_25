@@ -108,7 +108,7 @@ class Agent(object):
 
         done = torch.Tensor(self.done).to(self.train_device)
 
-        self.state,self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
+        self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], []
 
         #
         # TASK 2:
@@ -132,9 +132,12 @@ class Agent(object):
         wandb.log({"policy_loss":policy_loss.item()})
         #wandb.log({"Q_value":Q_value.item()})
 
-        return delta.detach(), v.detach(), I
+        return delta.detach(), I
 
-    def update_critic(self, delta, v):
+    def update_critic(self, delta):
+        state = torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
+        v=get_critic(state)
+        self.states=[]
         critic_loss=(delta*v)
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
