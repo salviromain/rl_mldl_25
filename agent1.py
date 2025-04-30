@@ -138,6 +138,7 @@ class Agent(object):
         v_next = self.get_critic(next_states)
         v_next = (1 - done) * v_next
         v=self.get_critic(state)
+        delta=rewards+self.gamma*v_next-v
         target = rewards + self.gamma * v_next
         critic_loss = F.mse_loss(v, target.detach())
         self.critic_optimizer.zero_grad()
