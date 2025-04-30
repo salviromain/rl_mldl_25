@@ -141,7 +141,7 @@ class Agent(object):
         v=self.get_critic(state)
         delta=rewards+self.gamma*v_next-v
         target = rewards + self.gamma * v_next
-        critic_loss = delta*F.mse_loss(v, target.detach())
+        critic_loss = F.mse_loss(v, target.detach())
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         wandb.log({"critic_loss":critic_loss.item()})
