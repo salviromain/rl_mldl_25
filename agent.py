@@ -88,38 +88,43 @@ class Agent(object):
         self.advantage = []
 
 
-    def update_policy(self, use_baseline, constant_baseline):
-
-        action_log_probs = torch.stack(self.action_log_probs, dim=0).to(self.train_device).squeeze(-1)
-        states = torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
-        next_states = torch.stack(self.next_states, dim=0).to(self.train_device).squeeze(-1)
-        rewards = torch.stack(self.rewards, dim=0).to(self.train_device).squeeze(-1)
-        done = torch.Tensor(self.done).to(self.train_device)
-
+    def update_policy(self, use_baseline=False, constant_baseline=0.0):
+    # Stack and move to device
+        action_log_probs = torch.stack(self.action_log_probs).to(self.train_device)
+        rewards = torch.stack(self.rewards).to(self.train_device).squeeze(-1)
         
-
-        
+        # 1. Compute discounted returns
         returns = discount_rewards(rewards, self.gamma)
-
+        
+        # 2. Normalize returns (helps with high variance)
+        returns = (returns - returns.mean()) / (returns.std() + 1e-8)
+    
+        # 3. Use baseline if requested
         if use_baseline:
             advantage = returns - constant_baseline
         else:
             advantage = returns
-            
-            
-
-        advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)  
-        #   - compute policy gradient loss function given actions and returns
+    
+        # 4. Calculate entropy for all policies (optional, but helps exploration)
         normal_dists = [self.policy(s.to(self.train_device)) for s in self.states]
         entropy = torch.stack([dist.entropy().sum() for dist in normal_dists]).mean()
-        policy_loss = -(action_log_probs * advantage.detach()).mean() - 0.001*entropy
+    
+        # 5. Compute loss (REINFORCE objective with optional entropy bonus)
+        policy_loss = -(action_log_probs * advantage.detach()).mean() - 0.01 * entropy
+    
+        # 6. Backprop and optimize
         self.optimizer.zero_grad()
         policy_loss.backward()
         self.optimizer.step()
-        self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
+    
+        # 7. Clear memory
+        self.states.clear()
+        self.next_states.clear()
+        self.action_log_probs.clear()
+        self.rewards.clear()
+        self.done.clear()
     
         return policy_loss.item(), returns.sum().item(), entropy.item()
-    
 
 
     def get_action(self, state, evaluation=False):
