@@ -30,7 +30,7 @@ class Policy(torch.nn.Module):
         
         # Learned standard deviation for exploration at training time 
         self.sigma_activation = F.softplus
-        init_sigma = 1
+        init_sigma = .75
         self.sigma = torch.nn.Parameter(torch.zeros(self.action_space)+init_sigma)
 
 
