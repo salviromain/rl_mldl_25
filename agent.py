@@ -108,19 +108,17 @@ class Agent(object):
             
             
 
-        #discount_factors = torch.tensor([self.gamma ** t for t in range(len(advantage))]).to(self.train_device)
-        #policy_loss = -(discount_factors * action_log_probs * advantage.detach()).mean()
-        policy_loss = -(action_log_probs * advantage.detach()).mean()
-
-    
+        advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)  
+        #   - compute policy gradient loss function given actions and returns
+        normal_dists = [self.policy(s.to(self.train_device)) for s in self.states]
+        entropy = torch.stack([dist.entropy().sum() for dist in normal_dists]).mean()
+        policy_loss = -(action_log_probs * advantage.detach()).mean() - 0.01*entropy
         self.optimizer.zero_grad()
-        policy_loss.backward()
+        policy.loss.backward()
         self.optimizer.step()
-    
-        # Clean up
         self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
     
-        return policy_loss.item(), returns.sum().item()
+        return policy_loss.item(), returns.sum().item(), entropy.item()
     
 
 
