@@ -54,7 +54,7 @@ def main():
                 use_baseline=use_bs,
                 constant_baseline=bs_val
             )
-            episode_returns[label] = episode_return
+            episode_returns[label] = train_reward
 
             wandb.log({
             f"{label}/episode_return": episode_return,
