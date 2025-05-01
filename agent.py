@@ -75,7 +75,7 @@ class Agent(object):
     def __init__(self, policy, device='cpu'):
         self.train_device = device
         self.policy = policy.to(self.train_device)
-        self.optimizer = torch.optim.Adam(policy.parameters(), lr=1e-3)
+        self.optimizer = torch.optim.Adam(policy.parameters(), lr=1e-4)
 
         self.gamma = 0.99
         self.states = []
@@ -112,7 +112,7 @@ class Agent(object):
         #   - compute policy gradient loss function given actions and returns
         normal_dists = [self.policy(s.to(self.train_device)) for s in self.states]
         entropy = torch.stack([dist.entropy().sum() for dist in normal_dists]).mean()
-        policy_loss = -(action_log_probs * advantage.detach()).mean() - 0.01*entropy
+        policy_loss = -(action_log_probs * advantage.detach()).mean() - 0.001*entropy
         self.optimizer.zero_grad()
         policy_loss.backward()
         self.optimizer.step()
