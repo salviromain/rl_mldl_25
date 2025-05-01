@@ -7,7 +7,7 @@ import wandb
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n-episodes', default=100000, type=int)
+    parser.add_argument('--n-episodes', default=20000, type=int)
     parser.add_argument('--print-every', default=2000, type=int)
     parser.add_argument('--device', default='cpu', type=str)
     return parser.parse_args()
@@ -32,9 +32,9 @@ def main():
 
     for episode in range(args.n_episodes):
         
-        episode_returns={}
+        train_rew={}
         for agent, label, use_bs, bs_val in [
-            (agent_bs, 'BS30', True, 30.0),
+            (agent_bs, 'NOBSchat', False, 30.0),
             #(agent_nobs, 'BS80', True, 80.0)
         ]:
             done = False
@@ -50,11 +50,11 @@ def main():
                 train_reward += reward
                 steps+=1
 
-            policy_loss, episode_return = agent.update_policy(
+            policy_loss, episode_return, entropy = agent.update_policy(
                 use_baseline=use_bs,
                 constant_baseline=bs_val
             )
-            episode_returns[label] = train_reward
+            train_rew[label] = train_reward
 
             wandb.log({
             f"{label}/episode_return": episode_return,
@@ -62,13 +62,14 @@ def main():
             f"{label}/use_baseline": use_bs,
             f"{label}/constant_baseline_value": bs_val,
             f"{label}/episode_steps": steps,
+            f"{label}/entropy": entropy,
             }, step=episode)
         if (episode + 1) % args.print_every == 0:
-            print(f"[{episode+1}] Returns - BS30: {episode_returns['BS30']:.2f} | BS30: {episode_returns['BS30']:.2f}")
+            print(f"[{episode+1}] Returns - NOBSchat: {train_rew['NOBSchat']:.2f}")
 
     #torch.save(agent_bs.policy.state_dict(), "BS50.mdl")
     #torch.save(agent_nobs.policy.state_dict(), "BS80.mdl")
-    torch.save(agent_nobs.policy.state_dict(), "BS30.mdl")
+    torch.save(agent_nobs.policy.state_dict(), "NOBSchat.mdl")
 
 if __name__ == '__main__':
     main()
