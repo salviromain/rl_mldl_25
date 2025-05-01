@@ -7,7 +7,7 @@ import wandb
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n-episodes', default=20000, type=int)
+    parser.add_argument('--n-episodes', default=100000, type=int)
     parser.add_argument('--print-every', default=2000, type=int)
     parser.add_argument('--device', default='cpu', type=str)
     return parser.parse_args()
