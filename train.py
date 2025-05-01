@@ -57,7 +57,7 @@ def main():
             train_rew[label] = train_reward
 
             wandb.log({
-            f"{label}/episode_return": episode_return,
+            f"{label}/episode_return": train_reward,
             f"{label}/policy_loss": policy_loss,
             f"{label}/use_baseline": use_bs,
             f"{label}/constant_baseline_value": bs_val,
