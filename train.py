@@ -35,7 +35,7 @@ def main():
         train_rew = {}
 
         for agent, label, use_bs, bs_val in [
-            (agent_bs, 'NOBSchat', False, 30.0),
+            (agent_bs, 'NOBSchat', True, 30.0),
             # (agent_nobs, 'BS80', True, 80.0)
         ]:
             done = False
