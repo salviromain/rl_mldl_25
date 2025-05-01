@@ -69,7 +69,7 @@ def main():
 
     #torch.save(agent_bs.policy.state_dict(), "BS50.mdl")
     #torch.save(agent_nobs.policy.state_dict(), "BS80.mdl")
-    torch.save(agent_nobs.policy.state_dict(), "NOBSchat.mdl")
+    torch.save(agent_nobs.policy.state_dict(), "NOBSchat2.mdl")
 
 if __name__ == '__main__':
     main()
