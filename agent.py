@@ -94,17 +94,18 @@ class Agent(object):
         rewards = torch.stack(self.rewards).to(self.train_device).squeeze(-1)
         
         # 1. Compute discounted returns
+      # 1. Compute discounted returns
         returns = discount_rewards(rewards, self.gamma)
         
-        # 2. Normalize returns (helps with high variance)
-        returns = (returns - returns.mean()) / (returns.std() + 1e-8)
-    
-        # 3. Use baseline if requested
+        # 2. Use baseline if requested
         if use_baseline:
-            advantage = returns - constant_baseline
+            baseline = returns.mean()
+            advantage = returns - baseline
         else:
             advantage = returns
-    
+        
+        # 3. Normalize advantage (not returns)
+        advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)
         # 4. Calculate entropy for all policies (optional, but helps exploration)
         normal_dists = [self.policy(s.to(self.train_device)) for s in self.states]
         entropy = torch.stack([dist.entropy().sum() for dist in normal_dists]).mean()
