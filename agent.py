@@ -114,7 +114,7 @@ class Agent(object):
         entropy = torch.stack([dist.entropy().sum() for dist in normal_dists]).mean()
         policy_loss = -(action_log_probs * advantage.detach()).mean() - 0.01*entropy
         self.optimizer.zero_grad()
-        policy.loss.backward()
+        policy_loss.backward()
         self.optimizer.step()
         self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
     
