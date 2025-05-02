@@ -88,7 +88,7 @@ class Agent(object):
         self.advantage = []
 
 
-    def update_policy(self, use_baseline=False, constant_baseline=0.0):
+    def update_policy(self, use_baseline, constant_baseline=0.0):
     # Stack and move to device
         action_log_probs = torch.stack(self.action_log_probs).to(self.train_device)
         rewards = torch.stack(self.rewards).to(self.train_device).squeeze(-1)
