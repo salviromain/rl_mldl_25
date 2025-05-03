@@ -80,7 +80,7 @@ def main():
         if (episode + 1) % args.print_every == 0:
             print(f"[{episode + 1}] Returns - NOBSchat: {train_rew['NOBSchat']:.2f}")
 
-    torch.save(agent_nobs.policy.state_dict(), "NOBSchat.mdl")
+    torch.save(agent_bs.policy.state_dict(), "NOBSchat.mdl")
 
 if __name__ == '__main__':
     main()
