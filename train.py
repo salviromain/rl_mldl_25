@@ -8,7 +8,7 @@ import wandb
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--n-episodes', default=150000, type=int)
-    parser.add_argument('--batch-episodes', default=50, type=int)  # NEW
+    parser.add_argument('--batch-episodes', default=10, type=int)  # NEW
     parser.add_argument('--print-every', default=2000, type=int)
     parser.add_argument('--device', default='cpu', type=str)
     return parser.parse_args()
@@ -35,8 +35,8 @@ def main():
         train_rew = {}
 
         for agent, label, use_bs, bs_val in [
-            #(agent_bs, 'NOBS', True, 30.0),
-            (agent_nobs, 'NOBS', False, 0.0)
+            (agent_bs, 'BS20', True, 20.0),
+            #(agent_nobs, 'NOBS', False, 0.0)
         ]:
             done = False
             train_reward = 0
@@ -78,9 +78,9 @@ def main():
             wandb.log(log_dict, step=episode)
 
         if (episode + 1) % args.print_every == 0:
-            print(f"[{episode + 1}] Returns - NOBS: {train_rew['NOBS']:.2f}")
+            print(f"[{episode + 1}] Returns - BS20: {train_rew['BS20']:.2f}")
 
-    torch.save(agent_nobs.policy.state_dict(), "NOBS.mdl")
+    torch.save(agent_bs.policy.state_dict(), "BS20.mdl")
 
 if __name__ == '__main__':
     main()
