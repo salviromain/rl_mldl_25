@@ -61,15 +61,25 @@ class Agent:
         self.rewards = []
         self.done = []
 
+        self.moving_avg_return = None  # NEW
+
     def update_policy(self, use_baseline, constant_baseline):
         action_log_probs = torch.stack(self.action_log_probs).to(self.train_device)
         rewards = torch.stack(self.rewards).to(self.train_device).squeeze(-1)
 
         returns = discount_rewards(rewards, self.gamma)
 
+        # Update moving average return
+        batch_return = returns.sum().item()
+        if self.moving_avg_return is None:
+            self.moving_avg_return = batch_return
+        else:
+            alpha = 0.05  # Smoothing factor
+            self.moving_avg_return = alpha * batch_return + (1 - alpha) * self.moving_avg_return
+
         if use_baseline:
             if constant_baseline == 0.0:
-                baseline = returns.mean()
+                baseline = self.moving_avg_return  # NEW
             else:
                 baseline = constant_baseline
             advantage = returns - baseline
@@ -94,7 +104,7 @@ class Agent:
         self.rewards.clear()
         self.done.clear()
 
-        return policy_loss.item(), returns.sum().item(), entropy.item()
+        return policy_loss.item(), batch_return, entropy.item()
 
     def get_action(self, state, evaluation=False):
         x = torch.from_numpy(state).float().to(self.train_device)
