@@ -35,8 +35,8 @@ def main():
         train_rew = {}
 
         for agent, label, use_bs, bs_val in [
-            #(agent_bs, 'NOBS', True, 30.0),
-            (agent_nobs, 'NOBS', False, 0.0)
+            (agent_bs, 'NOBSchat', True, 30.0),
+            #(agent_nobs, 'NOBS', False, 0.0)
         ]:
             done = False
             train_reward = 0
@@ -78,9 +78,9 @@ def main():
             wandb.log(log_dict, step=episode)
 
         if (episode + 1) % args.print_every == 0:
-            print(f"[{episode + 1}] Returns - NOBS: {train_rew['NOBS']:.2f}")
+            print(f"[{episode + 1}] Returns - NOBSchat: {train_rew['NOBSchat']:.2f}")
 
-    torch.save(agent_nobs.policy.state_dict(), "NOBS.mdl")
+    torch.save(agent_bs.policy.state_dict(), "NOBSchat.mdl")
 
 if __name__ == '__main__':
     main()
