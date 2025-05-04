@@ -25,8 +25,8 @@ def main():
     act_dim = env.action_space.shape[-1]
 
     # Grid of hyperparams
-    lr_grid = [1e-3, 5e-4, 1e-4]
-    entropy_grid = [0.0, 0.01, 0.02]
+    lr_grid = [1e-3]
+    entropy_grid = [0.1]
 
     combinations = list(itertools.product(lr_grid, entropy_grid))
 
