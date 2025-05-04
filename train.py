@@ -5,7 +5,6 @@ import gym
 from env.custom_hopper import *
 from agent import Agent, Policy
 import wandb
-import itertools
 
 
 def parse_args():
@@ -16,33 +15,50 @@ def parse_args():
     parser.add_argument('--device', default='cpu', type=str)
     return parser.parse_args()
 
-args = parse_args()
 
+args = parse_args()
 
 def main():
     env = gym.make('CustomHopper-source-v0')
     obs_dim = env.observation_space.shape[-1]
     act_dim = env.action_space.shape[-1]
 
-    # Grid of hyperparams
-    lr_grid = [1e-3]
-    entropy_grid = [0.1]
+    agents = [
+        {
+            "label": "NoBaseline",
+            "agent": Agent(Policy(obs_dim, act_dim), lr=1e-3, entropy_coeff=0.02, device=args.device),
+            "use_baseline": False,
+            "baseline_val": 0.0
+        },
+        {
+            "label": "Baseline20",
+            "agent": Agent(Policy(obs_dim, act_dim), lr=1e-3, entropy_coeff=0.01, device=args.device),
+            "use_baseline": True,
+            "baseline_val": 20.0
+        },
+        {
+            "label": "Baseline50",
+            "agent": Agent(Policy(obs_dim, act_dim), lr=1e-3, entropy_coeff=0.01, device=args.device),
+            "use_baseline": True,
+            "baseline_val": 50.0
+        }
+    ]
 
-    combinations = list(itertools.product(lr_grid, entropy_grid))
-
-    for lr, entropy_coeff in combinations:
+    for config in agents:
         wandb.init(
-            project="reinforce-grid-search",
-            name=f"nobs-lr{lr}-ent{entropy_coeff}",
-            config={"lr": lr, "entropy_coeff": entropy_coeff, "algorithm": "REINFORCE", "baseline": False},
+            project="reinforce-multirun",
+            name=f"{config['label']}",
+            config={"baseline": config['use_baseline'], "baseline_val": config['baseline_val'], "entropy_coeff": config['agent'].entropy_coeff},
         )
-
-        policy = Policy(obs_dim, act_dim)
-        agent = Agent(policy, lr=lr, entropy_coeff=entropy_coeff, device=args.device)
 
         episode_counter = 0
 
         for episode in range(args.n_episodes):
+            agent = config['agent']
+            label = config['label']
+            use_bs = config['use_baseline']
+            bs_val = config['baseline_val']
+
             done = False
             train_reward = 0
             state = env.reset()
@@ -59,25 +75,26 @@ def main():
             episode_counter += 1
 
             if episode_counter % args.batch_episodes == 0:
-                policy_loss, episode_return, entropy = agent.update_policy(use_baseline=False)
+                policy_loss, episode_return, entropy = agent.update_policy(use_baseline=use_bs, constant_baseline=bs_val)
             else:
                 policy_loss, episode_return, entropy = None, None, None
 
             log_dict = {
-                "episode_return": train_reward,
-                "episode_steps": steps,
+                f"{label}/episode_return": train_reward,
+                f"{label}/episode_steps": steps,
             }
             if policy_loss is not None:
                 log_dict.update({
-                    "policy_loss": policy_loss,
-                    "entropy": entropy,
+                    f"{label}/policy_loss": policy_loss,
+                    f"{label}/entropy": entropy,
                 })
+
             wandb.log(log_dict, step=episode)
 
             if (episode + 1) % args.print_every == 0:
-                print(f"[{episode + 1}] LR={lr}, Ent={entropy_coeff} | Return: {train_reward:.2f}")
+                print(f"[{episode + 1}] {label} | Return: {train_reward:.2f}")
 
-        torch.save(agent.policy.state_dict(), f"nobs-lr{lr}-ent{entropy_coeff}.mdl")
+        torch.save(agent.policy.state_dict(), f"{label}.mdl")
         wandb.finish()
 
 
