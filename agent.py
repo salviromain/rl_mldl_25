@@ -104,7 +104,6 @@ class Agent(object):
         else:
             advantage = returns
         
-        # 3. Normalize advantage (not returns)
         advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)
         # 4. Calculate entropy for all policies (optional, but helps exploration)
         normal_dists = [self.policy(s.to(self.train_device)) for s in self.states]
