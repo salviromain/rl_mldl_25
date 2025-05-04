@@ -9,9 +9,9 @@ import wandb
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n-episodes', default=10000, type=int)
+    parser.add_argument('--n-episodes', default=100000, type=int)
     parser.add_argument('--batch-episodes', default=10, type=int)
-    parser.add_argument('--print-every', default=1000, type=int)
+    parser.add_argument('--print-every', default=2000, type=int)
     parser.add_argument('--device', default='cpu', type=str)
     return parser.parse_args()
 
@@ -31,16 +31,16 @@ def main():
             "baseline_val": 0.0
         },
         {
+            "label": "BaselineMean",
+            "agent": Agent(Policy(obs_dim, act_dim), lr=1e-3, entropy_coeff=0.01, device=args.device),
+            "use_baseline": True,
+            "baseline_val": 0.0
+        },
+        {
             "label": "Baseline20",
             "agent": Agent(Policy(obs_dim, act_dim), lr=1e-3, entropy_coeff=0.01, device=args.device),
             "use_baseline": True,
             "baseline_val": 20.0
-        },
-        {
-            "label": "Baseline50",
-            "agent": Agent(Policy(obs_dim, act_dim), lr=1e-3, entropy_coeff=0.01, device=args.device),
-            "use_baseline": True,
-            "baseline_val": 50.0
         }
     ]
 
