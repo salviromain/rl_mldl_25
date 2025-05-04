@@ -68,10 +68,10 @@ class Agent:
         returns = discount_rewards(rewards, self.gamma)
 
         if use_baseline:
-            if contant_baseline == 0.0:
+            if constant_baseline == 0.0:
                 baseline = returns.mean()
             else:
-                baseline = contant_baseline
+                baseline = constant_baseline
             advantage = returns - baseline
         else:
             advantage = returns.clone()
