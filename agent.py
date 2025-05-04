@@ -88,7 +88,7 @@ class Agent(object):
         self.advantage = []
 
 
-    def update_policy(self, use_baseline, constant_baseline=0.0):
+    def update_policy(self, use_baseline, constant_baseline):
     # Stack and move to device
         action_log_probs = torch.stack(self.action_log_probs).to(self.train_device)
         rewards = torch.stack(self.rewards).to(self.train_device).squeeze(-1)
@@ -99,7 +99,7 @@ class Agent(object):
         
         # 2. Use baseline if requested
         if use_baseline:
-            baseline = returns.mean()
+            baseline = constant_baseline
             advantage = returns - baseline
         else:
             advantage = returns
