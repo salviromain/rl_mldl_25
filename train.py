@@ -10,9 +10,9 @@ import itertools
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n-episodes', default=3000, type=int)
+    parser.add_argument('--n-episodes', default=10000, type=int)
     parser.add_argument('--batch-episodes', default=10, type=int)
-    parser.add_argument('--print-every', default=500, type=int)
+    parser.add_argument('--print-every', default=1000, type=int)
     parser.add_argument('--device', default='cpu', type=str)
     return parser.parse_args()
 
