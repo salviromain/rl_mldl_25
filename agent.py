@@ -47,7 +47,7 @@ class Policy(torch.nn.Module):
 
 
 class Agent:
-    def __init__(self, policy, lr=1e-4, entropy_coeff=0.01, gamma=0.99, device='cpu'):
+    def __init__(self, policy, lr, entropy_coeff, gamma=0.99, device='cpu'):
         self.train_device = device
         self.policy = policy.to(self.train_device)
         self.optimizer = torch.optim.Adam(policy.parameters(), lr=lr)
