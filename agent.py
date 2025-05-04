@@ -1,3 +1,4 @@
+# agent.py
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -21,134 +22,90 @@ class Policy(torch.nn.Module):
         self.hidden = 64
         self.tanh = torch.nn.Tanh()
 
-        """
-            Actor network
-        """
         self.fc1_actor = torch.nn.Linear(state_space, self.hidden)
         self.fc2_actor = torch.nn.Linear(self.hidden, self.hidden)
         self.fc3_actor_mean = torch.nn.Linear(self.hidden, action_space)
-        
-        # Learned standard deviation for exploration at training time 
+
         self.sigma_activation = F.softplus
         init_sigma = 0.5
-        self.sigma = torch.nn.Parameter(torch.zeros(self.action_space)+init_sigma)
-
-
-        """
-            Critic network
-        """
-        # TASK 3: critic network for actor-critic algorithm
-
+        self.sigma = torch.nn.Parameter(torch.ones(self.action_space) * init_sigma)
 
         self.init_weights()
 
-
     def init_weights(self):
         for m in self.modules():
-            if type(m) is torch.nn.Linear:
-                torch.nn.init.normal_(m.weight)
+            if isinstance(m, torch.nn.Linear):
+                torch.nn.init.normal_(m.weight, std=0.1)
                 torch.nn.init.zeros_(m.bias)
 
-
     def forward(self, x):
-        """
-            Actor
-        """
-        x_actor = self.tanh(self.fc1_actor(x))
-        x_actor = self.tanh(self.fc2_actor(x_actor))
-        action_mean = self.fc3_actor_mean(x_actor)
-
+        x = self.tanh(self.fc1_actor(x))
+        x = self.tanh(self.fc2_actor(x))
+        action_mean = self.fc3_actor_mean(x)
         sigma = self.sigma_activation(self.sigma)
-        normal_dist = Normal(action_mean, sigma)
+        return Normal(action_mean, sigma)
 
 
-        """
-            Critic
-        """
-        # TASK 3: forward in the critic network
-
-        
-        return normal_dist
-
-
-class Agent(object):
-    def __init__(self, policy, device='cpu'):
+class Agent:
+    def __init__(self, policy, lr=1e-4, entropy_coeff=0.01, gamma=0.99, device='cpu'):
         self.train_device = device
         self.policy = policy.to(self.train_device)
-        self.optimizer = torch.optim.Adam(policy.parameters(), lr=1e-4)
+        self.optimizer = torch.optim.Adam(policy.parameters(), lr=lr)
 
-        self.gamma = 0.99
+        self.entropy_coeff = entropy_coeff
+        self.gamma = gamma
+
         self.states = []
         self.next_states = []
         self.action_log_probs = []
         self.rewards = []
         self.done = []
-        self.values = []
-        self.returns = []
-        self.advantage = []
 
-
-    def update_policy(self, use_baseline, constant_baseline):
-    # Stack and move to device
+    def update_policy(self, use_baseline=False, constant_baseline=0.0):
         action_log_probs = torch.stack(self.action_log_probs).to(self.train_device)
         rewards = torch.stack(self.rewards).to(self.train_device).squeeze(-1)
-        
-        # 1. Compute discounted returns
-      # 1. Compute discounted returns
+
         returns = discount_rewards(rewards, self.gamma)
-        
-        # 2. Use baseline if requested
+
         if use_baseline:
-            baseline = constant_baseline
-            advantage = returns - baseline
+            advantage = returns - constant_baseline
         else:
-            advantage = returns
-        
+            advantage = returns.clone()
+
         advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)
-        # 4. Calculate entropy for all policies (optional, but helps exploration)
+
         normal_dists = [self.policy(s.to(self.train_device)) for s in self.states]
         entropy = torch.stack([dist.entropy().sum() for dist in normal_dists]).mean()
-    
-        # 5. Compute loss (REINFORCE objective with optional entropy bonus)
-        policy_loss = -(action_log_probs * advantage.detach()).mean() - 0.01 * entropy
-    
-        # 6. Backprop and optimize
+
+        policy_loss = -(action_log_probs * advantage.detach()).mean() - self.entropy_coeff * entropy
+
         self.optimizer.zero_grad()
         policy_loss.backward()
         self.optimizer.step()
-    
-        # 7. Clear memory
+
+        # Clear memory
         self.states.clear()
         self.next_states.clear()
         self.action_log_probs.clear()
         self.rewards.clear()
         self.done.clear()
-    
+
         return policy_loss.item(), returns.sum().item(), entropy.item()
 
-
     def get_action(self, state, evaluation=False):
-        """ state -> action (3-d), action_log_densities """
         x = torch.from_numpy(state).float().to(self.train_device)
-
         normal_dist = self.policy(x)
 
-        if evaluation:  # Return mean
+        if evaluation:
             return normal_dist.mean, None
 
-        else:   # Sample from the distribution
-            action = normal_dist.sample()
-
-            # Compute Log probability of the action [ log(p(a[0] AND a[1] AND a[2])) = log(p(a[0])*p(a[1])*p(a[2])) = log(p(a[0])) + log(p(a[1])) + log(p(a[2])) ]
-            action_log_prob = normal_dist.log_prob(action).sum()
-
-            return action, action_log_prob
-
+        action = normal_dist.sample()
+        action_log_prob = normal_dist.log_prob(action).sum()
+        return action, action_log_prob
 
     def store_outcome(self, state, next_state, action_log_prob, reward, done):
         self.states.append(torch.from_numpy(state).float())
         self.next_states.append(torch.from_numpy(next_state).float())
         self.action_log_probs.append(action_log_prob)
-        self.rewards.append(torch.Tensor([reward]))
+        self.rewards.append(torch.tensor([reward]))
         self.done.append(done)
-
