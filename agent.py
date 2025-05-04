@@ -61,14 +61,18 @@ class Agent:
         self.rewards = []
         self.done = []
 
-    def update_policy(self, use_baseline=False, constant_baseline=0.0):
+    def update_policy(self, use_baseline, constant_baseline):
         action_log_probs = torch.stack(self.action_log_probs).to(self.train_device)
         rewards = torch.stack(self.rewards).to(self.train_device).squeeze(-1)
 
         returns = discount_rewards(rewards, self.gamma)
 
         if use_baseline:
-            advantage = returns - constant_baseline
+            if contant_baseline == 0.0:
+                baseline = returns.mean()
+            else:
+                baseline = contant_baseline
+            advantage = returns - baseline
         else:
             advantage = returns.clone()
 
