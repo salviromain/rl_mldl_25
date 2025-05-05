@@ -79,14 +79,20 @@ class Agent:
 
         if use_baseline:
             if constant_baseline == 0.0:
-                baseline = self.moving_avg_return  # NEW
+                baseline = self.moving_avg_return
+                normalize_advantage = True
             else:
                 baseline = constant_baseline
+                normalize_advantage = False
+            
+
             advantage = returns - baseline
         else:
             advantage = returns.clone()
-
-        advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)
+            normalize_advantage = True 
+            
+        if normalize_advantage :
+            advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)
 
         normal_dists = [self.policy(s.to(self.train_device)) for s in self.states]
         entropy = torch.stack([dist.entropy().sum() for dist in normal_dists]).mean()
