@@ -84,7 +84,7 @@ class Agent:
                 baseline = torch.full_like(returns, self.moving_avg_return)
             else:
                 # Constant baseline
-                baseline = torch.full_like(returns, constant_baseline)
+                baseline =returns.mean()
             advantage = returns - baseline
         else:
             advantage = returns
