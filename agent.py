@@ -74,7 +74,7 @@ class Agent:
         if self.moving_avg_return is None:
             self.moving_avg_return = batch_return
         else:
-            alpha = 0.2  # faster adaptation
+            alpha = 0.05  # faster adaptation
             self.moving_avg_return = alpha * batch_return + (1 - alpha) * self.moving_avg_return
         
         # Compute advantage
