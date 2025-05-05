@@ -70,7 +70,7 @@ class Agent:
         returns = discount_rewards(rewards, self.gamma)
 
         # Update moving average return
-        batch_return = returns.sum().item()
+        batch_return = returns.mean().item()
         if self.moving_avg_return is None:
             self.moving_avg_return = batch_return
         else:
