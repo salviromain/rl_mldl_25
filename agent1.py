@@ -147,7 +147,7 @@ class Agent(object):
         self.done.clear()
         self.action_log_probs.clear()
         self.entropies.clear()
-            return self.gamma * I
+        return self.gamma * I
 
     def get_critic(self, state):
         return self.critic(state.to(self.train_device)).squeeze(-1)
