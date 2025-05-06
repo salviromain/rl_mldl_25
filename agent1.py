@@ -123,33 +123,31 @@ class Agent(object):
         wandb.log({"critic_loss": critic_loss.item()})
         return delta
 
-    def update_policy(self, I, delta):
+    def update_policy(self, delta):
         action_log_probs = torch.stack(self.action_log_probs).to(self.train_device)
         entropies = torch.stack(self.entropies).to(self.train_device)
-
-        # Normalize advantages (delta)
+    
+        # Optionally disable normalization temporarily
         delta = (delta - delta.mean()) / (delta.std() + 1e-8)
-
-        # Entropy regularization
+    
         entropy_coeff = 0.01
         policy_loss = -(delta * action_log_probs).mean() - entropy_coeff * entropies.mean()
-
-
+    
         self.optimizer.zero_grad()
         policy_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.policy.parameters(), 0.5)  # optional
         self.optimizer.step()
-
+    
         wandb.log({"policy_loss": policy_loss.item()})
-
-        # Clear stored episode data
+    
+        # Clear memory
         self.states.clear()
         self.next_states.clear()
         self.rewards.clear()
         self.done.clear()
         self.action_log_probs.clear()
         self.entropies.clear()
-
-        return self.gamma * I
+            return self.gamma * I
 
     def get_critic(self, state):
         return self.critic(state.to(self.train_device)).squeeze(-1)
