@@ -132,7 +132,8 @@ class Agent(object):
 
         # Entropy regularization
         entropy_coeff = 0.01
-        policy_loss = -(I * delta * action_log_probs).mean() - entropy_coeff * entropies.mean()
+        policy_loss = -(delta * action_log_probs).mean() - entropy_coeff * entropies.mean()
+
 
         self.optimizer.zero_grad()
         policy_loss.backward()
