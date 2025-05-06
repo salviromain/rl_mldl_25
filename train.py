@@ -1,74 +1,100 @@
+"""Train an RL agent on the OpenAI Gym Hopper environment using
+    REINFORCE and Actor-critic algorithms
+"""
 import argparse
+
 import torch
 import gym
-from env.custom_hopper import *
-from agent import Agent, Policy
 import wandb
+
+from env.custom_hopper import *
+from agent1 import Agent, Policy, Critic
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n-episodes', default=100000, type=int)
-    parser.add_argument('--print-every', default=2000, type=int)
-    parser.add_argument('--device', default='cpu', type=str)
+    parser.add_argument('--n-episodes', default=100000, type=int, help='Number of training episodes')
+    parser.add_argument('--print-every', default=5000, type=int, help='Print info every <> episodes')
+    parser.add_argument('--device', default='cpu', type=str, help='network device [cpu, cuda]')
+
     return parser.parse_args()
 
 args = parse_args()
 
+wandb.init(project="hopper-rl", config={
+    "episodes": args.n_episodes,
+    "print_every": args.print_every,
+    "device": args.device,
+    "lr_policy": 1e-4,
+    "lr_critic": 1e-5,
+    "gamma": 0.99
+})
+
 def main():
-    env = gym.make('CustomHopper-source-v0')
 
-    wandb.init(project="reinforce-dual", config={"gamma": 0.99, "algorithm": "REINFORCE"})
+	env = gym.make('CustomHopper-source-v0')
+	# env = gym.make('CustomHopper-target-v0')
 
-    obs_dim = env.observation_space.shape[-1]
-    act_dim = env.action_space.shape[-1]
+	print('Action space:', env.action_space)
+	print('State space:', env.observation_space)
+	print('Dynamics parameters:', env.get_parameters())
 
-    # Agent with constant baseline 20.0
-    policy_bs = Policy(obs_dim, act_dim)
-    agent_bs = Agent(policy_bs, device=args.device)
 
-    # Agent with NO baseline
-    policy_nobs = Policy(obs_dim, act_dim)
-    agent_nobs = Agent(policy_nobs, device=args.device)
+	"""
+		Training
+	"""
+	observation_space_dim = env.observation_space.shape[-1]
+	action_space_dim = env.action_space.shape[-1]
 
-    for episode in range(args.n_episodes):
-        
-        episode_returns={}
-        for agent, label, use_bs, bs_val in [
-            (agent_bs, 'BS30', True, 30.0),
-            #(agent_nobs, 'BS80', True, 80.0)
-        ]:
-            done = False
-            train_reward = 0
-            state = env.reset()
-            steps=0
+	policy = Policy(observation_space_dim, action_space_dim)
+	critic = Critic(observation_space_dim)
+	agent = Agent(policy, critic, device=args.device)
 
-            while not done:
-                action, log_prob = agent.get_action(state)
-                next_state, reward, done, info = env.step(action.detach().cpu().numpy())
-                agent.store_outcome(state, next_state, log_prob, reward, done)
-                state = next_state
-                train_reward += reward
-                steps+=1
+    #
+    # TASK 2 and 3: interleave data collection to policy updates
+    #
 
-            policy_loss, episode_return = agent.update_policy(
-                use_baseline=use_bs,
-                constant_baseline=bs_val
-            )
-            episode_returns[label] = train_reward
+	for episode in range(args.n_episodes):
+		done = False
 
-            wandb.log({
-            f"{label}/episode_return": episode_return,
-            f"{label}/policy_loss": policy_loss,
-            f"{label}/use_baseline": use_bs,
-            f"{label}/constant_baseline_value": bs_val,
-            f"{label}/episode_steps": steps,
-            }, step=episode)
-        if (episode + 1) % args.print_every == 0:
-            print(f"[{episode+1}] Returns - BS30: {episode_returns['BS30']:.2f} | BS30: {episode_returns['BS30']:.2f}")
+		train_reward = 0
+		
+		state = env.reset()  # Reset the environment and observe the initial state
+		
+		I=1
+		
+		while not done:  # Loop until the episode is over
+		
+			action, action_log_prob=agent.get_action(state)
+		
+			previous_state = state
+		
+			state, reward, done, info = env.step(action.detach().cpu().numpy())
 
-    #torch.save(agent_bs.policy.state_dict(), "BS50.mdl")
-    #torch.save(agent_nobs.policy.state_dict(), "BS80.mdl")
-    torch.save(agent_nobs.policy.state_dict(), "BS30.mdl")
+			agent.store_outcome(previous_state, state, action_log_prob, reward, done)
 
-if __name__ == '__main__':
-    main()
+			train_reward += reward
+
+			delta=agent.update_critic()
+
+			I= agent.update_policy(I,delta)
+
+			
+
+
+		wandb.log({"episode":episode,"return":train_reward})
+		
+		if (episode+1)%args.print_every == 0:
+
+			print('Training episode:', episode)
+
+			print('Episode return:', train_reward)
+
+
+	torch.save(agent.policy.state_dict(), "model_new_pseudocode.mdl")
+	wandb.save("model_critic_modified")
+	wandb.finish()
+	
+
+if _name_ == '_main_':
+	main()
