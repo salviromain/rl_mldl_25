@@ -1,8 +1,8 @@
 import numpy as np
 import torch
+import wandb
 import torch.nn.functional as F
 from torch.distributions import Normal
-
 
 def discount_rewards(r, gamma):
     discounted_r = torch.zeros_like(r)
@@ -12,10 +12,37 @@ def discount_rewards(r, gamma):
         discounted_r[t] = running_add
     return discounted_r
 
+class Critic(torch.nn.Module):
+    def _init_(self, state_space):
+        super()._init_()
+        self.state_space = state_space
+        """
+            Critic network
+        """
+        # TASK 3: critic network for actor-critic algorithm
+        self.model=torch.nn.Sequential(
+            torch.nn.Linear(self.state_space, 64),
+            torch.nn.ReLU(),
+            torch.nn.Linear(64, 32),
+            torch.nn.ReLU(),
+            torch.nn.Linear(32, 1),
+        )
+
+
+        self.model.apply(self.init_weights)
+
+    def init_weights(self,m):
+        if isinstance(m, torch.nn.Linear):
+            torch.nn.init.xavier_uniform_(m.weight)
+            if m.bias is not None:
+                torch.nn.init.zeros_(m.bias)
+    def forward(self, state):
+        value=self.model(state)
+        return value
 
 class Policy(torch.nn.Module):
-    def __init__(self, state_space, action_space):
-        super().__init__()
+    def _init_(self, state_space, action_space):
+        super()._init_()
         self.state_space = state_space
         self.action_space = action_space
         self.hidden = 64
@@ -32,13 +59,6 @@ class Policy(torch.nn.Module):
         self.sigma_activation = F.softplus
         init_sigma = 0.5
         self.sigma = torch.nn.Parameter(torch.zeros(self.action_space)+init_sigma)
-
-
-        """
-            Critic network
-        """
-        # TASK 3: critic network for actor-critic algorithm
-
 
         self.init_weights()
 
@@ -60,68 +80,82 @@ class Policy(torch.nn.Module):
 
         sigma = self.sigma_activation(self.sigma)
         normal_dist = Normal(action_mean, sigma)
-
-
-        """
-            Critic
-        """
-        # TASK 3: forward in the critic network
-
-        
         return normal_dist
 
-
 class Agent(object):
-    def __init__(self, policy, device='cpu'):
+    def _init_(self, policy,critic, device='cpu'):
         self.train_device = device
         self.policy = policy.to(self.train_device)
-        self.optimizer = torch.optim.Adam(policy.parameters(), lr=1e-3)
-
+        self.critic = critic.to(self.train_device)
+        self.optimizer = torch.optim.Adam(policy.parameters(), lr=1e-4)
+        self.critic_optimizer = torch.optim.Adam(critic.parameters(), lr=1e-5)
         self.gamma = 0.99
         self.states = []
         self.next_states = []
         self.action_log_probs = []
         self.rewards = []
         self.done = []
-        self.values = []
-        self.returns = []
-        self.advantage = []
 
 
-    def update_policy(self, use_baseline, constant_baseline):
-
+    def update_policy(self,I, delta):
         action_log_probs = torch.stack(self.action_log_probs, dim=0).to(self.train_device).squeeze(-1)
+
         states = torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
+
         next_states = torch.stack(self.next_states, dim=0).to(self.train_device).squeeze(-1)
+
         rewards = torch.stack(self.rewards, dim=0).to(self.train_device).squeeze(-1)
+
         done = torch.Tensor(self.done).to(self.train_device)
 
-        
+        self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
 
-        
-        returns = discount_rewards(rewards, self.gamma)
+        #
+        # TASK 2:
+        #   - compute discounted returns
+        #   - compute policy gradient loss function given actions and returns
+        #   - compute gradients and step the optimizer
+        #
 
-        if use_baseline:
-            advantage = returns - constant_baseline
-        else:
-            advantage = returns
-            
-            
 
-        #discount_factors = torch.tensor([self.gamma ** t for t in range(len(advantage))]).to(self.train_device)
-        #policy_loss = -(discount_factors * action_log_probs * advantage.detach()).mean()
-        policy_loss = -(action_log_probs * advantage.detach()).mean()
-
-    
+        #
+        # TASK 3:
+        ##delta = (delta - delta.mean()) / (delta.std() + 1e-8)
+        policy_loss = -(I * delta * action_log_probs).mean() #Chat said to put -
         self.optimizer.zero_grad()
         policy_loss.backward()
         self.optimizer.step()
-    
-        # Clean up
-        self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
-    
-        return policy_loss.item(), returns.sum().item()
-    
+        I=self.gamma*I
+        wandb.log({"policy_loss":policy_loss.item()})
+        #wandb.log({"Q_value":Q_value.item()})
+
+        return I
+
+    def update_critic(self):
+
+        state = torch.stack(self.states, dim=0).to(self.train_device).squeeze(-1)
+        next_states = torch.stack(self.next_states, dim=0).to(self.train_device).squeeze(-1)
+        done = torch.Tensor(self.done).to(self.train_device)
+        rewards = torch.stack(self.rewards, dim=0).to(self.train_device).squeeze(-1)
+        v_next = self.get_critic(next_states)
+        v_next = (1 - done) * v_next
+        v=self.get_critic(state)
+
+
+        delta=rewards+self.gamma*v_next-v
+        delta=delta.detach()
+
+        #target = rewards + self.gamma * v_next
+        #critic_loss = F.mse_loss(v, target.detach())
+
+        critic_loss=-delta*v
+        self.critic_optimizer.zero_grad()
+        critic_loss.backward()
+        #torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=5.0)
+        wandb.log({"critic_loss":critic_loss.item()})
+        self.critic_optimizer.step()
+        return delta
+        
 
 
     def get_action(self, state, evaluation=False):
@@ -140,7 +174,11 @@ class Agent(object):
             action_log_prob = normal_dist.log_prob(action).sum()
 
             return action, action_log_prob
+    def get_critic(self, state):
+        x = state.float().to(self.train_device)
 
+        value= self.critic(x)
+        return value
 
     def store_outcome(self, state, next_state, action_log_prob, reward, done):
         self.states.append(torch.from_numpy(state).float())
@@ -148,4 +186,3 @@ class Agent(object):
         self.action_log_probs.append(action_log_prob)
         self.rewards.append(torch.Tensor([reward]))
         self.done.append(done)
-
