@@ -54,16 +54,19 @@ def main():
         
         while not done:
             action, action_log_prob, dist = agent.get_action(state)
-            previous_state = state
-            state, reward, done, _ = env.step(action.detach().cpu().numpy())
-
             entropy = dist.entropy().sum()
+            previous_state = state
+        
+            # Step in the environment using the sampled action
+            state, reward, done, _ = env.step(action.detach().cpu().numpy())
+        
+            # Store transition and entropy of the action taken
             agent.store_outcome(previous_state, state, action_log_prob, reward, done, entropy)
-
+        
             train_reward += reward
 
         # Log reward
-        wandb.log({"episode": episode, "return": train_reward})
+            wandb.log({"episode": episode, "return": train_reward})
 
         # Every 10 episodes, update policy and critic
         if (episode + 1) % batch_size == 0:
