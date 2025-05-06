@@ -16,7 +16,6 @@ def parse_args():
     parser.add_argument('--n-episodes', default=100000, type=int, help='Number of training episodes')
     parser.add_argument('--print-every', default=5000, type=int, help='Print info every <> episodes')
     parser.add_argument('--device', default='cpu', type=str, help='network device [cpu, cuda]')
-
     return parser.parse_args()
 
 args = parse_args()
@@ -31,70 +30,54 @@ wandb.init(project="hopper-rl", config={
 })
 
 def main():
+    env = gym.make('CustomHopper-source-v0')
+    # env = gym.make('CustomHopper-target-v0')
 
-	env = gym.make('CustomHopper-source-v0')
-	# env = gym.make('CustomHopper-target-v0')
+    print('Action space:', env.action_space)
+    print('State space:', env.observation_space)
+    print('Dynamics parameters:', env.get_parameters())
 
-	print('Action space:', env.action_space)
-	print('State space:', env.observation_space)
-	print('Dynamics parameters:', env.get_parameters())
+    observation_space_dim = env.observation_space.shape[-1]
+    action_space_dim = env.action_space.shape[-1]
 
+    policy = Policy(observation_space_dim, action_space_dim)
+    critic = Critic(observation_space_dim)
+    agent = Agent(policy, critic, device=args.device)
 
-	"""
-		Training
-	"""
-	observation_space_dim = env.observation_space.shape[-1]
-	action_space_dim = env.action_space.shape[-1]
+    batch_size = 10  # collect experience for 10 episodes before updating
+    I = 1.0
 
-	policy = Policy(observation_space_dim, action_space_dim)
-	critic = Critic(observation_space_dim)
-	agent = Agent(policy, critic, device=args.device)
+    for episode in range(args.n_episodes):
+        done = False
+        train_reward = 0
+        state = env.reset()
+        
+        while not done:
+            action, action_log_prob, dist = agent.get_action(state)
+            previous_state = state
+            state, reward, done, _ = env.step(action.detach().cpu().numpy())
 
-    #
-    # TASK 2 and 3: interleave data collection to policy updates
-    #
+            entropy = dist.entropy().sum()
+            agent.store_outcome(previous_state, state, action_log_prob, reward, done, entropy)
 
-	for episode in range(args.n_episodes):
-		done = False
+            train_reward += reward
 
-		train_reward = 0
-		
-		state = env.reset()  # Reset the environment and observe the initial state
-		
-		I=1
-		
-		while not done:  # Loop until the episode is over
-		
-			action, action_log_prob=agent.get_action(state)
-		
-			previous_state = state
-		
-			state, reward, done, info = env.step(action.detach().cpu().numpy())
+        # Log reward
+        wandb.log({"episode": episode, "return": train_reward})
 
-			agent.store_outcome(previous_state, state, action_log_prob, reward, done)
+        # Every 10 episodes, update policy and critic
+        if (episode + 1) % batch_size == 0:
+            delta = agent.update_critic()
+            I = agent.update_policy(I, delta)
 
-			train_reward += reward
+        if (episode + 1) % args.print_every == 0:
+            print(f"Episode {episode + 1} | Return: {train_reward}")
 
-			delta=agent.update_critic()
-
-			I= agent.update_policy(I,delta)
-
-			
+    # Save models
+    torch.save(agent.policy.state_dict(), "model_new_pseudocode.mdl")
+    wandb.save("model_critic_modified")
+    wandb.finish()
 
 
-		wandb.log({"episode":episode,"return":train_reward})
-		
-		if (episode+1)%args.print_every == 0:
-
-			print('Training episode:', episode)
-
-			print('Episode return:', train_reward)
-
-
-	torch.save(agent.policy.state_dict(), "model_new_pseudocode.mdl")
-	wandb.save("model_critic_modified")
-	wandb.finish()
-	
-
-if _name_ == '_main_':
-	main()
+if __name__ == '__main__':
+    main()
