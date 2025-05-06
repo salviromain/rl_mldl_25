@@ -13,8 +13,8 @@ def discount_rewards(r, gamma):
     return discounted_r
 
 class Critic(torch.nn.Module):
-    def _init_(self, state_space):
-        super()._init_()
+    def __init__(self, state_space):
+        super().__init__()
         self.state_space = state_space
         """
             Critic network
@@ -41,8 +41,8 @@ class Critic(torch.nn.Module):
         return value
 
 class Policy(torch.nn.Module):
-    def _init_(self, state_space, action_space):
-        super()._init_()
+    def __init__(self, state_space, action_space):
+        super().__init__()
         self.state_space = state_space
         self.action_space = action_space
         self.hidden = 126
@@ -83,7 +83,7 @@ class Policy(torch.nn.Module):
         return normal_dist
 
 class Agent(object):
-    def _init_(self, policy,critic, device='cpu'):
+    def __init__(self, policy,critic, device='cpu'):
         self.train_device = device
         self.policy = policy.to(self.train_device)
         self.critic = critic.to(self.train_device)
