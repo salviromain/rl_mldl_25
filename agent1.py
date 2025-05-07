@@ -95,7 +95,7 @@ class Agent(object):
         self.action_log_probs = []
         self.rewards = []
         self.done = []
-        self.global_step=0
+        #self.global_step=0
 
 
     def update_policy(self,I, delta):
@@ -110,7 +110,7 @@ class Agent(object):
         done = torch.Tensor(self.done).to(self.train_device)
 
         self.states, self.next_states, self.action_log_probs, self.rewards, self.done = [], [], [], [], []
-        self.global_step+=1
+        #self.global_step+=1
         #
         # TASK 2:
         #   - compute discounted returns
@@ -127,7 +127,7 @@ class Agent(object):
         policy_loss.backward()
         self.optimizer.step()
         I=self.gamma*I
-        wandb.log({"policy_loss":policy_loss.item()}, step=self.global_step)
+        #wandb.log({"policy_loss":policy_loss.item()}, step=self.global_step)
         #wandb.log({"Q_value":Q_value.item()})
 
         return I
@@ -146,7 +146,7 @@ class Agent(object):
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         #torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=5.0)
-        wandb.log({"critic_loss":critic_loss.item()}, step=self.global_step)
+        #wandb.log({"critic_loss":critic_loss.item()}, step=self.global_step)
         self.critic_optimizer.step()
         return delta.detach()
 
