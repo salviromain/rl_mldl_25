@@ -82,7 +82,7 @@ def main():
 			
 
 
-		wandb.log({"episode":episode,"return":train_reward})
+		wandb.log({"return": train_reward}, step=episode)
 		
 		if (episode+1)%args.print_every == 0:
 
