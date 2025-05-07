@@ -126,7 +126,7 @@ class Agent(object):
         policy_loss.backward()
         self.optimizer.step()
         I=self.gamma*I
-        wandb.log({"policy_loss":policy_loss.item()})
+        #wandb.log({"policy_loss":policy_loss.item()})
         #wandb.log({"Q_value":Q_value.item()})
 
         return I
@@ -145,7 +145,7 @@ class Agent(object):
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         #torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=5.0)
-        wandb.log({"critic_loss":critic_loss.item()})
+        #wandb.log({"critic_loss":critic_loss.item()})
         self.critic_optimizer.step()
         return delta.detach()
 
