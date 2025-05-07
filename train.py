@@ -25,7 +25,7 @@ def main():
 
     agents = [
         {
-            "label": "NoBaseline_e=0.02",
+            "label": "NoBaseline_e=0.01",
             "agent": Agent(Policy(obs_dim, act_dim), lr=1e-3, entropy_coeff=0.02, device=args.device),
             "use_baseline": False,
            "baseline_val": 0.0
@@ -37,7 +37,7 @@ def main():
          #  "baseline_val": 0.0
        # },
         {
-           "label": "Baseline20_e=0.02",
+           "label": "Baseline20_e=0.01",
             "agent": Agent(Policy(obs_dim, act_dim), lr=1e-3, entropy_coeff=0.01, device=args.device),
             "use_baseline": True,
             "baseline_val": 20.0
