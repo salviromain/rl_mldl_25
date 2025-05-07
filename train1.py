@@ -29,7 +29,6 @@ wandb.init(project="hopper-rl", config={
     "lr_critic": 1e-4,
     "gamma": 0.99
 })
-wandb.define_metric("step", step_metric=True)
 
 def main():
 
