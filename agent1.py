@@ -21,9 +21,9 @@ class Critic(torch.nn.Module):
         """
         # TASK 3: critic network for actor-critic algorithm
         self.model=torch.nn.Sequential(
-            torch.nn.Linear(self.state_space, 64),
+            torch.nn.Linear(self.state_space, 126),
             torch.nn.ReLU(),
-            torch.nn.Linear(64, 32),
+            torch.nn.Linear(126, 32),
             torch.nn.ReLU(),
             torch.nn.Linear(32, 1),
         )
@@ -45,7 +45,7 @@ class Policy(torch.nn.Module):
         super().__init__()
         self.state_space = state_space
         self.action_space = action_space
-        self.hidden = 64
+        self.hidden = 126
         self.tanh = torch.nn.Tanh()
 
         """
@@ -87,7 +87,7 @@ class Agent(object):
         self.train_device = device
         self.policy = policy.to(self.train_device)
         self.critic = critic.to(self.train_device)
-        self.optimizer = torch.optim.Adam(policy.parameters(), lr=1e-3)
+        self.optimizer = torch.optim.Adam(policy.parameters(), lr=1e-4)
         self.critic_optimizer = torch.optim.Adam(critic.parameters(), lr=1e-4)
         self.gamma = 0.99
         self.states = []
