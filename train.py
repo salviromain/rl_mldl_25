@@ -94,7 +94,7 @@ def main():
             if (episode + 1) % args.print_every == 0:
                 print(f"[{episode + 1}] {label} | Return: {train_reward:.2f}")
 
-        torch.save(agent.policy.state_dict(), f"{label}.mdl")
+        torch.save(agent.policy.state_dict(), f"{label}colab.mdl")
         wandb.finish()
 
 
