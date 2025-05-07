@@ -92,7 +92,7 @@ def main():
 
 
 	torch.save(agent.policy.state_dict(), "model_new_pseudocode.mdl")
-	wandb.save("model_critic_modified")
+	wandb.save("model_new_pseudocode")
 	wandb.finish()
 	
 
