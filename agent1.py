@@ -83,7 +83,7 @@ class Policy(torch.nn.Module):
         return normal_dist
 
 class Agent(object):
-    def __init__(self, policy,critic, device='cuda'):
+    def __init__(self, policy,critic, device='cpu'):
         self.train_device = device
         self.policy = policy.to(self.train_device)
         self.critic = critic.to(self.train_device)
