@@ -1,59 +1,75 @@
-"""Test an RL agent on the OpenAI Gym Hopper environment"""
 import argparse
-
 import torch
 import gym
-
+import numpy as np
+import matplotlib.pyplot as plt
 from env.custom_hopper import *
 from agent import Agent, Policy
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', default=None, type=str, help='Model path')
-    parser.add_argument('--device', default='cpu', type=str, help='network device [cpu, cuda]')
+    parser.add_argument('--device', default='cpu', type=str, help='Network device [cpu, cuda]')
     parser.add_argument('--render', default=True, action='store_true', help='Render the simulator')
     parser.add_argument('--episodes', default=10, type=int, help='Number of test episodes')
-
+    parser.add_argument('--save_path', default='test_rewards_plot.png', type=str, help='Path to save reward plot')
     return parser.parse_args()
 
 args = parse_args()
 
-
 def main():
+    env = gym.make('CustomHopper-source-v0')
+    # env = gym.make('CustomHopper-target-v0')
 
-	env = gym.make('CustomHopper-source-v0')
-	#env = gym.make('CustomHopper-target-v0')
+    print('Action space:', env.action_space)
+    print('State space:', env.observation_space)
+    print('Dynamics parameters:', env.get_parameters())
 
-	print('Action space:', env.action_space)
-	print('State space:', env.observation_space)
-	print('Dynamics parameters:', env.get_parameters())
-	
-	observation_space_dim = env.observation_space.shape[-1]
-	action_space_dim = env.action_space.shape[-1]
+    observation_space_dim = env.observation_space.shape[-1]
+    action_space_dim = env.action_space.shape[-1]
 
-	policy = Policy(observation_space_dim, action_space_dim)
-	policy.load_state_dict(torch.load(args.model), strict=True)
+    policy = Policy(observation_space_dim, action_space_dim)
+    policy.load_state_dict(torch.load(args.model), strict=True)
 
-	agent = Agent(policy, lr=0.0, entropy_coeff=0.0, device=args.device)
-	for episode in range(args.episodes):
-		done = False
-		test_reward = 0
-		state = env.reset()
+    agent = Agent(policy, lr=0.0, entropy_coeff=0.0, device=args.device)
 
-		while not done:
+    rewards = []
 
-			action, _ = agent.get_action(state, evaluation=True)
+    for episode in range(args.episodes):
+        done = False
+        test_reward = 0
+        state = env.reset()
 
-			state, reward, done, info = env.step(action.detach().cpu().numpy())
+        while not done:
+            action, _ = agent.get_action(state, evaluation=True)
+            state, reward, done, info = env.step(action.detach().cpu().numpy())
+            if args.render:
+                env.render()
+            test_reward += reward
 
+        print(f"Episode: {episode + 1} | Return: {test_reward}")
+        rewards.append(test_reward)
 
-			if args.render:
-				env.render()
+    # Plot rewards
+    episodes = np.arange(1, args.episodes + 1)
+    rewards = np.array(rewards)
+    mean = rewards.mean()
+    std = rewards.std()
 
-			test_reward += reward
+    plt.figure(figsize=(10, 5))
+    plt.plot(episodes, rewards, label='Episode Return')
+    plt.axhline(mean, color='r', linestyle='--', label=f'Mean = {mean:.2f}')
+    plt.fill_between(episodes, mean - std, mean + std, color='r', alpha=0.2, label='±1 Std Dev')
+    plt.xlabel('Episode')
+    plt.ylabel('Return')
+    plt.title('Test Performance')
+    plt.legend()
+    plt.grid(True)
 
-		print(f"Episode: {episode} | Return: {test_reward}")
-	
+    # Save the plot
+    plt.savefig(args.save_path)
+    print(f"Saved reward plot to: {args.save_path}")
+    plt.close()
 
 if __name__ == '__main__':
-	main()
+    main()
