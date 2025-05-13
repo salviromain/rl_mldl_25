@@ -1,22 +1,100 @@
-"""Sample script for training a control policy on the Hopper environment
-   using stable-baselines3 (https://stable-baselines3.readthedocs.io/en/master/)
-
-    Read the stable-baselines3 documentation and implement a training
-    pipeline with an RL algorithm of your choice between PPO and SAC.
-"""
+import torch
 import gym
-from env.custom_hopper import *
+import wandb
+import itertools
+import os
+from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
+from env.custom_hopper import *  # Ensure this is implemented correctly
 
-def main():
-    train_env = gym.make('CustomHopper-source-v0')
+# === Logging callback for wandb ===
+class WandbLoggingCallback(BaseCallback):
+    def __init__(self, verbose=0):
+        super(WandbLoggingCallback, self).__init__(verbose)
+        self.episode_count = 0
 
-    print('State space:', train_env.observation_space)  # state-space
-    print('Action space:', train_env.action_space)  # action-space
-    print('Dynamics parameters:', train_env.get_parameters())  # masses of each link of the Hopper
+    def _on_step(self) -> bool:
+        for info in self.locals.get("infos", []):
+            if "episode" in info:
+                self.episode_count += 1
+                episode_return = info["episode"]["r"]
+                wandb.log({"episode_return": episode_return}, step=self.episode_count)
+        return True
 
-    #
-    # TASK 4 & 5: train and test policies on the Hopper env with stable-baselines3
-    #
+# === Environment setup ===
+def make_env():
+    env = gym.make('CustomHopper-source-v0')
+    env = Monitor(env)
+    return env
 
-if __name__ == '__main__':
-    main()
+# === Training loop ===
+def train(config):
+    train_env = DummyVecEnv([make_env])
+    eval_env = DummyVecEnv([make_env])
+
+    model = PPO(
+        "MlpPolicy",
+        train_env,
+        verbose=0,
+        device=config["device"],
+        learning_rate=config["lr"],
+        gamma=config["gamma"],
+    )
+
+    eval_callback = EvalCallback(
+        eval_env,
+        best_model_save_path=f"./best_model_{wandb.run.id}",
+        log_path=f"./logs_{wandb.run.id}",
+        eval_freq=10000,
+        deterministic=True,
+        render=False
+    )
+
+    wandb_cb = WandbLoggingCallback()
+
+    model.learn(
+        total_timesteps=config["timesteps"],
+        callback=[eval_callback, wandb_cb]
+    )
+
+    # Save final model and weights
+    model_path = f"ppo_model_{wandb.run.id}.zip"
+    weights_path = f"ppo_weights_{wandb.run.id}.pt"
+
+    model.save(model_path)
+    torch.save(model.policy.state_dict(), weights_path)
+
+    wandb.save(model_path)
+    wandb.save(weights_path)
+
+    print(f"Saved model to {model_path}")
+    print(f"Saved weights to {weights_path}")
+
+# === Manual grid search setup ===
+if __name__ == "__main__":
+    # Hyperparameter grid
+    learning_rates = [0.0003, 0.001, 0.003]
+    gammas = [0.99]
+    devices = ["cuda" if torch.cuda.is_available() else "cpu"]
+    timesteps = 1_000_000
+
+    # Cartesian product of all combinations
+    for lr, gamma, device in itertools.product(learning_rates, gammas, devices):
+        config = {
+            "lr": lr,
+            "gamma": gamma,
+            "device": device,
+            "timesteps": timesteps
+        }
+
+        # Start new wandb run
+        wandb.init(
+            project="hopper-rl-gridsearch",
+            config=config,
+            reinit=True,
+        )
+
+        train(config)
+        wandb.finish()
