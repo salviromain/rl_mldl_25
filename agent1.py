@@ -21,21 +21,9 @@ class Critic(torch.nn.Module):
         """
         # TASK 3: critic network for actor-critic algorithm
         self.model=torch.nn.Sequential(
-            torch.nn.Linear(self.state_space, 256),
+            torch.nn.Linear(self.state_space, 126),
             torch.nn.ReLU(),
-            torch.nn.Linear(256,128),
-            torch.nn.ReLU(),
-            torch.nn.Linear(128, 64),
-            torch.nn.ReLU(),
-            torch.nn.Linear(64, 32),
-            torch.nn.ReLU(),
-            torch.nn.Linear(32, 16),
-            torch.nn.ReLU(),
-            torch.nn.Linear(16, 8),
-            torch.nn.ReLU(),
-            torch.nn.Linear(8,4),
-            torch.nn.ReLU(),
-            torch.nn.Linear(4, 2),
+            torch.nn.Linear(126, 32),
             torch.nn.ReLU(),
             torch.nn.Linear(2,1)
             
