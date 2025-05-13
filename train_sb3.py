@@ -75,7 +75,7 @@ def train(config):
 # === Manual grid search setup ===
 if __name__ == "__main__":
     # Hyperparameter grid
-    learning_rates = [0.0003,]
+    learning_rates = [0.0001,0.001]
     gammas = [0.99]
     devices = ["cuda" if torch.cuda.is_available() else "cpu"]
     timesteps = 1_000_000
