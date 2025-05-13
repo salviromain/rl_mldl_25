@@ -25,7 +25,7 @@ class WandbLoggingCallback(BaseCallback):
 
 # === Environment setup ===
 def make_env():
-    env = gym.make('CustomHopper-source-v0')
+    env = gym.make('CustomHopper-target-v0')
     env = Monitor(env)
     return env
 
@@ -75,7 +75,7 @@ def train(config):
 # === Manual grid search setup ===
 if __name__ == "__main__":
     # Hyperparameter grid
-    learning_rates = [0.0003, 0.001, 0.003]
+    learning_rates = [0.0003,]
     gammas = [0.99]
     devices = ["cuda" if torch.cuda.is_available() else "cpu"]
     timesteps = 1_000_000
