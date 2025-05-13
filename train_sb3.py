@@ -75,10 +75,10 @@ def train(config):
 # === Manual grid search setup ===
 if __name__ == "__main__":
     # Hyperparameter grid
-    learning_rates = [0.001]
+    learning_rates = [0.0005,0.0002]
     gammas = [0.99]
     devices = ["cuda" if torch.cuda.is_available() else "cpu"]
-    timesteps = 1_000_000
+    timesteps = 5_000_000
 
     # Cartesian product of all combinations
     for lr, gamma, device in itertools.product(learning_rates, gammas, devices):
