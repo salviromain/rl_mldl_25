@@ -21,17 +21,27 @@ class Critic(torch.nn.Module):
         """
         # TASK 3: critic network for actor-critic algorithm
         self.model=torch.nn.Sequential(
-            torch.nn.Linear(self.state_space, 126),
+            torch.nn.Linear(self.state_space, 256),
             torch.nn.ReLU(),
-            torch.nn.Linear(126, 32),
+            torch.nn.Linear(256,128),
+            torch.nn.ReLU(),
+            torch.nn.Linear(128, 64),
+            torch.nn.ReLU(),
+            torch.nn.Linear(64, 32),
+            torch.nn.ReLU(),
+            torch.nn.Linear(32, 16),
+            torch.nn.ReLU(),
+            torch.nn.Linear(16, 8),
+            torch.nn.ReLU(),
+            torch.nn.Linear(8,4),
+            torch.nn.ReLU(),
+            torch.nn.Linear(4, 2),
             torch.nn.ReLU(),
             torch.nn.Linear(2,1)
             
         )
 
-
         self.model.apply(self.init_weights)
-
 
     def init_weights(self,m):
         if isinstance(m, torch.nn.Linear):
@@ -39,12 +49,10 @@ class Critic(torch.nn.Module):
             if m.bias is not None:
                 torch.nn.init.zeros_(m.bias)
 
-
     def forward(self, state):
         value=self.model(state)
         return value
     
-
 
 
 
@@ -70,13 +78,11 @@ class Policy(torch.nn.Module):
 
         self.init_weights()
 
-
     def init_weights(self):
         for m in self.modules():
             if type(m) is torch.nn.Linear:
                 torch.nn.init.normal_(m.weight)
                 torch.nn.init.zeros_(m.bias)
-
 
     def forward(self, x):
         
@@ -87,7 +93,6 @@ class Policy(torch.nn.Module):
         sigma = self.sigma_activation(self.sigma)
         normal_dist = Normal(action_mean, sigma)
         return normal_dist
-
 
 class Agent(object):
     def __init__(self, policy,critic, device='cpu'):
@@ -103,7 +108,6 @@ class Agent(object):
         self.rewards = []
         self.done = []
         #self.global_step=0
-
 
     def update_policy(self,I, delta):
         action_log_probs = torch.stack(self.action_log_probs, dim=0).to(self.train_device).squeeze(-1)
@@ -125,14 +129,12 @@ class Agent(object):
         #   - compute gradients and step the optimizer
         #
 
-
         #
         # TASK 3:
         ##delta = (delta - delta.mean()) / (delta.std() + 1e-8)
         policy_loss = -(I * delta.detach() * action_log_probs).mean()
         self.optimizer.zero_grad()
         policy_loss.backward()
-
 
 
         self.optimizer.step()
@@ -159,12 +161,10 @@ class Agent(object):
         #torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=5.0)
         #wandb.log({"critic_loss":critic_loss.item()}, step=self.global_step)
 
-
         self.critic_optimizer.step()
         return delta.detach()
 
         
-
 
     def get_action(self, state, evaluation=False):
         """ state -> action (3-d), action_log_densities """
@@ -195,3 +195,4 @@ class Agent(object):
         self.action_log_probs.append(action_log_prob)
         self.rewards.append(torch.Tensor([reward]))
         self.done.append(done)
+
