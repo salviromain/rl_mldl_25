@@ -10,7 +10,6 @@ import wandb
 from env.custom_hopper import *
 from agent1 import Agent, Policy, Critic
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--n-episodes', default=100000, type=int, help='Number of training episodes')
@@ -32,69 +31,66 @@ wandb.init(project="hopper-rl", config={
 
 def main():
 
-	env = gym.make('CustomHopper-source-v0')
-	# env = gym.make('CustomHopper-target-v0')
+    env = gym.make('CustomHopper-source-v0')
+    # env = gym.make('CustomHopper-target-v0')
 
-	print('Action space:', env.action_space)
-	print('State space:', env.observation_space)
-	print('Dynamics parameters:', env.get_parameters())
+    print('Action space:', env.action_space)
+    print('State space:', env.observation_space)
+    print('Dynamics parameters:', env.get_parameters())
 
+    """
+        Training
+    """
+    observation_space_dim = env.observation_space.shape[-1]
+    action_space_dim = env.action_space.shape[-1]
 
-	"""
-		Training
-	"""
-	observation_space_dim = env.observation_space.shape[-1]
-	action_space_dim = env.action_space.shape[-1]
-
-	policy = Policy(observation_space_dim, action_space_dim)
-	critic = Critic(observation_space_dim)
-	agent = Agent(policy, critic, device=args.device)
+    policy = Policy(observation_space_dim, action_space_dim)
+    critic = Critic(observation_space_dim)
+    agent = Agent(policy, critic, device=args.device)
 
     #
     # TASK 2 and 3: interleave data collection to policy updates
     #
 
-	for episode in range(args.n_episodes):
-		done = False
+    for episode in range(args.n_episodes):
+        done = False
 
-		train_reward = 0
-		
-		state = env.reset()  # Reset the environment and observe the initial state
-		
-		I=1
-		
-		while not done:  # Loop until the episode is over
-		
-			action, action_log_prob=agent.get_action(state)
-		
-			previous_state = state
-		
-			state, reward, done, info = env.step(action.detach().cpu().numpy())
+        train_reward = 0
+        
+        state = env.reset()  # Reset the environment and observe the initial state
+        
+        I=1
+        
+        while not done:  # Loop until the episode is over
+        
+            action, action_log_prob=agent.get_action(state)
+        
+            previous_state = state
+        
+            state, reward, done, info = env.step(action.detach().cpu().numpy())
 
-			agent.store_outcome(previous_state, state, action_log_prob, reward, done)
+            agent.store_outcome(previous_state, state, action_log_prob, reward, done)
 
-			train_reward += reward
+            train_reward += reward
 
-			delta=agent.update_critic()
+            delta=agent.update_critic()
 
-			I= agent.update_policy(I,delta)
+            I= agent.update_policy(I,delta)
 
-			
+            
 
+        wandb.log({"return": train_reward}, step=episode)
+        
+        if (episode+1)%args.print_every == 0:
 
-		wandb.log({"return": train_reward}, step=episode)
-		
-		if (episode+1)%args.print_every == 0:
+            print('Training episode:', episode)
 
-			print('Training episode:', episode)
+            print('Episode return:', train_reward)
 
-			print('Episode return:', train_reward)
-
-
-	torch.save(agent.policy.state_dict(), "model9_256.mdl")
-	wandb.save("model8_cpu")
-	wandb.finish()
-	
+    torch.save(agent.policy.state_dict(), "model9_256.mdl")
+    wandb.save("model8_cpu")
+    wandb.finish()
+    
 
 if __name__ == '__main__':
-	main()
+    main()
