@@ -21,36 +21,56 @@ class Critic(torch.nn.Module):
         """
         # TASK 3: critic network for actor-critic algorithm
         self.model=torch.nn.Sequential(
-            torch.nn.Linear(self.state_space, 126),
+            torch.nn.Linear(self.state_space, 256),
             torch.nn.ReLU(),
-            torch.nn.Linear(126, 32),
+            torch.nn.Linear(256,128),
             torch.nn.ReLU(),
-            torch.nn.Linear(32, 1),
+            torch.nn.Linear(128, 64),
+            torch.nn.ReLU(),
+            torch.nn.Linear(64, 32),
+            torch.nn.ReLU(),
+            torch.nn.Linear(32, 16),
+            torch.nn.ReLU(),
+            torch.nn.Linear(16, 8),
+            torch.nn.ReLU(),
+            torch.nn.Linear(8,4),
+            torch.nn.ReLU(),
+            torch.nn.Linear(4, 2),
+            torch.nn.ReLU(),
+            torch.nn.Linear(2,1)
+            
         )
 
 
         self.model.apply(self.init_weights)
+
 
     def init_weights(self,m):
         if isinstance(m, torch.nn.Linear):
             torch.nn.init.xavier_uniform_(m.weight)
             if m.bias is not None:
                 torch.nn.init.zeros_(m.bias)
+
+
     def forward(self, state):
         value=self.model(state)
         return value
+    
+
+
+
+
+
 
 class Policy(torch.nn.Module):
     def __init__(self, state_space, action_space):
         super().__init__()
         self.state_space = state_space
         self.action_space = action_space
-        self.hidden = 126
+        self.hidden = 256
         self.tanh = torch.nn.Tanh()
 
-        """
-            Actor network
-        """
+     
         self.fc1_actor = torch.nn.Linear(state_space, self.hidden)
         self.fc2_actor = torch.nn.Linear(self.hidden, self.hidden)
         self.fc3_actor_mean = torch.nn.Linear(self.hidden, action_space)
@@ -71,9 +91,7 @@ class Policy(torch.nn.Module):
 
 
     def forward(self, x):
-        """
-            Actor
-        """
+        
         x_actor = self.tanh(self.fc1_actor(x))
         x_actor = self.tanh(self.fc2_actor(x_actor))
         action_mean = self.fc3_actor_mean(x_actor)
@@ -81,6 +99,7 @@ class Policy(torch.nn.Module):
         sigma = self.sigma_activation(self.sigma)
         normal_dist = Normal(action_mean, sigma)
         return normal_dist
+
 
 class Agent(object):
     def __init__(self, policy,critic, device='cpu'):
@@ -125,6 +144,9 @@ class Agent(object):
         policy_loss = -(I * delta.detach() * action_log_probs).mean()
         self.optimizer.zero_grad()
         policy_loss.backward()
+
+
+
         self.optimizer.step()
         I=self.gamma*I
         #wandb.log({"policy_loss":policy_loss.item()}, step=self.global_step)
@@ -143,10 +165,13 @@ class Agent(object):
         delta=rewards+self.gamma*v_next-v
         target = rewards + self.gamma * v_next
         critic_loss = F.mse_loss(v, target.detach())
+        #critic_loss= -(delta.detach()*v).mean()
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         #torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=5.0)
         #wandb.log({"critic_loss":critic_loss.item()}, step=self.global_step)
+
+
         self.critic_optimizer.step()
         return delta.detach()
 
@@ -169,6 +194,7 @@ class Agent(object):
             action_log_prob = normal_dist.log_prob(action).sum()
 
             return action, action_log_prob
+        
     def get_critic(self, state):
         x = state.float().to(self.train_device)
 

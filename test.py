@@ -6,11 +6,11 @@ import gym
 import time
 
 from env.custom_hopper import *
-from agent import Agent, Policy, Critic
+from agent1 import Agent, Policy, Critic
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='model_critic_modified.mdl', type=str, help='Model path')
+    parser.add_argument('--model', default='model9_256.mdl', type=str, help='Model path')
     parser.add_argument('--device', default='cpu', type=str, help='network device [cpu, cuda]')
     parser.add_argument('--render', default=False, action='store_true', help='Render the simulator')
     parser.add_argument('--episodes', default=10, type=int, help='Number of test episodes')
@@ -34,7 +34,8 @@ def main():
 
 	policy = Policy(observation_space_dim, action_space_dim)
 	policy.load_state_dict(torch.load(args.model), strict=True)
-	critic=Critic(observation_space_dim, action_space_dim)
+	#critic=Critic(observation_space_dim, action_space_dim)
+	critic=Critic(observation_space_dim)
 
 	agent = Agent(policy,critic, device=args.device)
 

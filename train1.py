@@ -91,8 +91,8 @@ def main():
 			print('Episode return:', train_reward)
 
 
-	torch.save(agent.policy.state_dict(), "model_new_pseudocode.mdl")
-	wandb.save("model_new_pseudocode")
+	torch.save(agent.policy.state_dict(), "model9_256.mdl")
+	wandb.save("model8_cpu")
 	wandb.finish()
 	
 
