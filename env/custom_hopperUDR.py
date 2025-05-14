@@ -91,8 +91,8 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         # Apply UDR to all body parts except torso (index 1)
         for i in range(len(randomized_masses)):
             if i != 1:  # Skip torso
-                low = 0.7 * self.initial_masses[i]
-                high = 1.3 * self.initial_masses[i]
+                low = 0.7 * randomized_masses[i]
+                high = 1.3 * randomized_masses[i]
                 randomized_masses[i] = np.random.uniform(low, high)
 
         # Apply the randomized masses
