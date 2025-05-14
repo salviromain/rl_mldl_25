@@ -17,7 +17,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         utils.EzPickle.__init__(self)
 
 
-        self.original_masses = np.copy(self.sim.model.body_mass[1:])
+        self.original_masses = np.copy(self.sim.model.body_mass[:])
         print("MASSES:", self.original_masses)
 # Default link masses
 
