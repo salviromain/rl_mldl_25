@@ -76,7 +76,7 @@ def train(config):
 # === Manual grid search setup ===
 if __name__ == "__main__":
     # Hyperparameter grid
-    learning_rates = [0.0005,0.0002]
+    learning_rates = [0.0003]
     gammas = [0.99]
     devices = ["cuda" if torch.cuda.is_available() else "cpu"]
     timesteps = 1_000_000
@@ -91,8 +91,12 @@ if __name__ == "__main__":
         }
 
         # Start new wandb run
+        run_name = f"lr_{lr}-source"
+
+# Start new wandb run with that name
         wandb.init(
             project="hopper-rl-gridsearch",
+            name=run_name,
             config=config,
             reinit=True,
         )
