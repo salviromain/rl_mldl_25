@@ -90,6 +90,22 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         return self._get_obs()
 
 
+    def reset_model_UDR(self):
+        # Copy current masses for safe modification
+        randomized_masses = self.original_masses
+        # Apply UDR to all body parts except torso (index 1)
+        for i in range(len(randomized_masses)):
+            if i != 1:  # Skip torso
+                low = 0.7 * self.initial_masses[i]
+                high = 1.3 * self.initial_masses[i]
+                randomized_masses[i] = np.random.uniform(low, high)
+
+        # Apply the randomized masses
+        self.model.body_mass[:] = randomized_masses
+
+        return super().reset_model()
+
+
     def viewer_setup(self):
         self.viewer.cam.trackbodyid = 2
         self.viewer.cam.distance = self.model.stat.extent * 0.75
