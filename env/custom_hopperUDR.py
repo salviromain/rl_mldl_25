@@ -83,22 +83,21 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
 
     def reset_model(self):
-        """Reset the environment to a random initial state"""
+        """Reset the environment and apply UDR correctly each episode."""
         qpos = self.init_qpos + self.np_random.uniform(low=-.005, high=.005, size=self.model.nq)
         qvel = self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
         self.set_state(qpos, qvel)
-        randomized_masses = self.original_masses
-        # Apply UDR to all body parts except torso (index 1)
+    
+        randomized_masses = np.copy(self.original_masses)
         for i in range(len(randomized_masses)):
             if i != 1:  # Skip torso
-                low = 0.7 * randomized_masses[i]
-                high = 1.3 * randomized_masses[i]
+                low = 0.7 * self.original_masses[i]
+                high = 1.3 * self.original_masses[i]
                 randomized_masses[i] = np.random.uniform(low, high)
-
-        # Apply the randomized masses
+    
         self.model.body_mass[:] = randomized_masses
-
         return self._get_obs()
+    
 
 
     def viewer_setup(self):
