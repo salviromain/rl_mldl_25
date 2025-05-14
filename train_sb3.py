@@ -7,8 +7,8 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
-from env.custom_hopperUDR import *  # Ensure this is implemented correctly
-
+from env.custom_hopperUDR import *  # Ensure this is implemented correctly, this one is for UDR
+#from env.custom_hopper import * # this for normal runs 
 # === Logging callback for wandb ===
 class WandbLoggingCallback(BaseCallback):
     def __init__(self, verbose=0):
