@@ -7,7 +7,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
-from env.custom_hopper import *  # Ensure this is implemented correctly
+from env.custom_hopperUDR import *  # Ensure this is implemented correctly
 
 # === Logging callback for wandb ===
 class WandbLoggingCallback(BaseCallback):
@@ -25,7 +25,8 @@ class WandbLoggingCallback(BaseCallback):
 
 # === Environment setup ===
 def make_env():
-    env = gym.make('CustomHopper-target-v0')
+    #env = gym.make('CustomHopper-target-v0')
+    env = gym.make('CustomHopper-source-v0')
     env = Monitor(env)
     return env
 
