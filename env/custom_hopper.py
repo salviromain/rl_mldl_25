@@ -103,7 +103,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         # Apply the randomized masses
         self.model.body_mass[:] = randomized_masses
 
-        return super().reset_model()
+        return self._get_obs()
 
 
     def viewer_setup(self):
