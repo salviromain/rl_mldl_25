@@ -34,8 +34,8 @@ def make_env():
 
 # === Training loop ===
 def train(config):
-    train_env = DummyVecEnv([make_env])
-    eval_env = DummyVecEnv([make_env])
+    train_env = DummyVecEnv([make_env()])
+    eval_env = DummyVecEnv([make_env()])
 
     model = PPO(
         "MlpPolicy",
