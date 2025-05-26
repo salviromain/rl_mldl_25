@@ -102,36 +102,37 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
     def reset_model(self):
         """Reset the environment to a valid initial state and sample new target."""
-        max_tries = 100
-        for _ in range(max_tries):
-            self.target_xy = self.np_random.uniform(low=[1.5, -3.0], high=[10.0, 3.0])
+        self.target_xy = self.np_random.uniform(low=[1.5, -3.0], high=[10.0, 3.0])
     
-            # Sample initial state
-            qpos = self.init_qpos + self.np_random.uniform(low=-.005, high=.005, size=self.model.nq)
-            qvel = self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
-            self.set_state(qpos, qvel)
+        # Set a safe initial state that passes all constraints
+        qpos = self.init_qpos.copy()
+        qvel = self.init_qvel.copy()
     
-            # Set state
-            self.set_state(qpos, qvel)
+        # Override with guaranteed values
+        qpos[0] = 0.0      # x-position
+        qpos[1] = 1.25     # height (must be ≥ 0.7)
+        qpos[2] = 0.0      # angle (must be ≤ 0.2)
+        qpos[3:] = self.np_random.uniform(low=-0.01, high=0.01, size=self.model.nq - 3)
     
-            # Now validate
-            xpos, ypos, height, ang = self.sim.data.qpos[0:4]
-            s = self.state_vector()
-            done = not (
-                np.isfinite(s).all() and
-                (np.abs(s[2:]) < 100).all() and
-                (height >= 0.7) and (abs(ang) <= 0.2)
-            )
-            print(f"Reset attempt: height={height}, angle={ang}, done={done}")
+        qvel[:] = self.np_random.uniform(low=-0.01, high=0.01, size=self.model.nv)
     
-            if not done:
-                return self._get_obs()
+        self.set_state(qpos, qvel)
     
-        raise RuntimeError("Failed to sample a valid initial state after 100 tries.")
-
+        xpos, ypos, height, ang = self.sim.data.qpos[0:4]
+        s = self.state_vector()
+        done = not (
+            np.isfinite(s).all() and
+            (np.abs(s[2:]) < 100).all() and
+            (height >= 0.7) and (abs(ang) <= 0.2)
+        )
+        print(f"[FORCED RESET] height={height}, angle={ang}, done={done}")
+        if done:
+            raise RuntimeError("Forced reset still failed. Check init_qpos/init_qvel.")
     
-       
-
+        return self._get_obs()
+    
+           
+    
 
     def viewer_setup(self):
         self.viewer.cam.trackbodyid = 2
