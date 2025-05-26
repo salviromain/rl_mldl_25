@@ -108,3 +108,22 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
     def get_mujoco_state(self):
         return self.sim.get_state()
+gym.envs.register(
+    id="CustomHopper-v0",
+    entry_point="env.custom_hopper:CustomHopper",  # Adjust the module path as needed
+    max_episode_steps=500,
+)
+
+gym.envs.register(
+    id="CustomHopper-source-v0",
+    entry_point="env.custom_hopper:CustomHopper",
+    max_episode_steps=500,
+    kwargs={"domain": "source"}
+)
+
+gym.envs.register(
+    id="CustomHopper-target-v0",
+    entry_point="env.custom_hopper:CustomHopper",
+    max_episode_steps=500,
+    kwargs={"domain": "target"}
+)
