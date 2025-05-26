@@ -77,10 +77,13 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         reward = forward_vel + alive_bonus - 1e-3 * np.square(a).sum()
     
         height = self.sim.data.qpos[1]
-        
-        quat = self.sim.data.body_xquat[self.model.body_name2id("torso")]
-        rpy = functions.quat2euler(quat)
-        roll, pitch, yaw = rpy
+    
+        # Get torso rotation matrix (3x3)
+        rot_mat = self.sim.data.body_xmat[self.model.body_name2id("torso")].reshape(3, 3)
+    
+        # Calculate roll and pitch from rotation matrix
+        roll = np.arctan2(rot_mat[2,1], rot_mat[2,2])
+        pitch = np.arctan2(-rot_mat[2,0], np.sqrt(rot_mat[2,1]**2 + rot_mat[2,2]**2))
     
         done = not (
             np.isfinite(self.state_vector()).all() and
@@ -91,6 +94,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
     
         ob = self._get_obs()
         return ob, reward, done, {}
+
 
 
     def viewer_setup(self):
