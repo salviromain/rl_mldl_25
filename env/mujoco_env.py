@@ -72,12 +72,12 @@ class MujocoEnv(gym.Env):
     
         worldbody = root.find('worldbody')
     
-        num_cylinders = 250
-        x_positions = np.random.uniform(-8, 8, size=num_cylinders)
+        num_cylinders = 150
+        x_positions = np.random.uniform(-10, 10, size=num_cylinders)
         y_positions = np.random.uniform(-8, 8, size=num_cylinders)
         
-        circumf = np.random.uniform(0.005,0.2, size=num_cylinders)
-        heights = np.random.uniform(0.005,0.4, size=num_cylinders)
+        circumf = np.random.uniform(0.005,0.11, size=num_cylinders)
+        heights = np.random.uniform(0.005,0.15, size=num_cylinders)
         
 
         
