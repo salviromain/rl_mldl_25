@@ -109,24 +109,30 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         """Reset the environment to a valid initial state and sample new target."""
         max_tries = 100
         for _ in range(max_tries):
-            # Sample a new goal
             self.target_xy = self.np_random.uniform(low=[1.5, -3.0], high=[10.0, 3.0])
     
-            # Check if this state is valid (not 'done')
+            # Sample initial state
+            qpos = self.init_qpos + self.np_random.uniform(low=-0.01, high=0.01, size=self.init_qpos.shape)
+            qvel = self.init_qvel + self.np_random.uniform(low=-0.01, high=0.01, size=self.init_qvel.shape)
+    
+            # Set state
+            self.set_state(qpos, qvel)
+    
+            # Now validate
             xpos, ypos, height, ang = self.sim.data.qpos[0:4]
             s = self.state_vector()
             done = not (
                 np.isfinite(s).all() and
                 (np.abs(s[2:]) < 100).all() and
-                (height > .7) and (abs(ang) < .2)
+                (height >= 0.7) and (abs(ang) <= 0.2)
             )
             print(f"Reset attempt: height={height}, angle={ang}, done={done}")
-
+    
             if not done:
                 return self._get_obs()
     
         raise RuntimeError("Failed to sample a valid initial state after 100 tries.")
-    
+
     
        
 
