@@ -104,18 +104,19 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         """Reset the environment to a valid initial state and sample new target."""
         self.target_xy = self.np_random.uniform(low=[1.5, -3.0], high=[10.0, 3.0])
     
-        # Set a safe initial state that passes all constraints
-        qpos = self.init_qpos.copy()
-        qvel = self.init_qvel.copy()
+        # Set a safe initial state manually
+        qpos = np.zeros(self.model.nq)
+        qvel = np.zeros(self.model.nv)
     
-        # Override with guaranteed values
-        qpos[0] = 0.0      # x-position
-        qpos[1] = 1.25     # height (must be ≥ 0.7)
-        qpos[2] = 0.0      # angle (must be ≤ 0.2)
+        # Hopper has at least 4 DoFs: x, height, angle, joint1...
+        qpos[0] = 0.0        # x-position
+        qpos[1] = 1.25       # height (must be >= 0.7)
+        qpos[2] = 0.0        # angle (must be <= 0.2)
         qpos[3:] = self.np_random.uniform(low=-0.01, high=0.01, size=self.model.nq - 3)
     
         qvel[:] = self.np_random.uniform(low=-0.01, high=0.01, size=self.model.nv)
     
+        # Set state directly
         self.set_state(qpos, qvel)
     
         xpos, ypos, height, ang = self.sim.data.qpos[0:4]
@@ -127,9 +128,10 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         )
         print(f"[FORCED RESET] height={height}, angle={ang}, done={done}")
         if done:
-            raise RuntimeError("Forced reset still failed. Check init_qpos/init_qvel.")
+            raise RuntimeError("Forced reset still failed. qpos was not valid.")
     
         return self._get_obs()
+
     
            
     
