@@ -15,15 +15,21 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
     def __init__(self, domain=None, target_xy=None, include_goal_in_obs=True):
         self.target_xy = target_xy if target_xy is not None else np.array([10.0, 0.0])
         self.include_goal_in_obs = include_goal_in_obs
-        
-        # Now safe to initialize MujocoEnv, which may call step()
+
+        # Initialize the Mujoco environment
         MujocoEnv.__init__(self, 4)
         utils.EzPickle.__init__(self)
-        
+
+        # ✅ Force a safe default for init_qpos and init_qvel
+        self.init_qpos = np.array([0.0, 1.25, 0.0, 0.0, 0.0, 0.0])  # adjust length if needed
+        self.init_qvel = np.zeros_like(self.init_qpos)[:self.model.nv]
+
+        # Keep a copy of original mass for domain randomization
         self.original_masses = np.copy(self.sim.model.body_mass[1:])
-        
+
         if domain == 'source':
             self.sim.model.body_mass[1] *= 0.7
+
 
     def set_random_parameters(self):
         """Set random masses"""
@@ -101,22 +107,15 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
 
     def reset_model(self):
-        """Reset the environment to a valid initial state and sample new target."""
         self.target_xy = self.np_random.uniform(low=[1.5, -3.0], high=[10.0, 3.0])
     
-        # Set a safe initial state manually
-        qpos = np.zeros(self.model.nq)
-        qvel = np.zeros(self.model.nv)
+        qpos = self.init_qpos + self.np_random.uniform(low=-.01, high=.01, size=self.model.nq)
+        qvel = self.init_qvel + self.np_random.uniform(low=-.01, high=.01, size=self.model.nv)
     
-        # Hopper has at least 4 DoFs: x, height, angle, joint1...
-        qpos[0] = 0.0        # x-position
-        qpos[1] = 1.25       # height (must be >= 0.7)
-        qpos[2] = 0.0        # angle (must be <= 0.2)
-        qpos[3:] = self.np_random.uniform(low=-0.01, high=0.01, size=self.model.nq - 3)
+        # ✅ Force height and angle to safe range
+        qpos[1] = 1.25  # height > 0.7
+        qpos[2] = 0.0   # angle close to 0
     
-        qvel[:] = self.np_random.uniform(low=-0.01, high=0.01, size=self.model.nv)
-    
-        # Set state directly
         self.set_state(qpos, qvel)
     
         xpos, ypos, height, ang = self.sim.data.qpos[0:4]
@@ -127,13 +126,15 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
             (height >= 0.7) and (abs(ang) <= 0.2)
         )
         print(f"[FORCED RESET] height={height}, angle={ang}, done={done}")
+    
         if done:
             raise RuntimeError("Forced reset still failed. qpos was not valid.")
     
         return self._get_obs()
-
     
-           
+    
+        
+               
     
 
     def viewer_setup(self):
