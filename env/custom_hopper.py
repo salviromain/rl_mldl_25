@@ -95,7 +95,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         if self.target_xy is None:
             self.target_xy = self.np_random.uniform(low=[1.5,-3.0], high=[10.0, 3.0])
 
-        return self._get_obs())
+        return self._get_obs()
 
 
    
