@@ -45,7 +45,7 @@ def train(config):
     model = PPO(
         "MlpPolicy",
         train_env,
-        verbose=1,
+        verbose=0,
         device=config["device"],
         learning_rate=config["lr"],
         gamma=config["gamma"],
