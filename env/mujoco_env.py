@@ -73,7 +73,7 @@ class MujocoEnv(gym.Env):
         worldbody = root.find('worldbody')
     
         num_cylinders = 10
-        x_positions = np.random.uniform(0, 50, size=num_cylinders)
+        x_positions = np.random.uniform(0, 10, size=num_cylinders)
     
         for i, x in enumerate(x_positions):
             ET.SubElement(worldbody, 'geom', attrib={
