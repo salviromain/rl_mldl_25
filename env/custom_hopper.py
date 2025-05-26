@@ -12,16 +12,15 @@ from .mujoco_env import MujocoEnv
 
 
 class CustomHopper(MujocoEnv, utils.EzPickle):
-    def __init__(self, domain=None):
+    def __init__(self, domain=None, target_xy=None, include_goal_in_obs=True):
         MujocoEnv.__init__(self, 4)
         utils.EzPickle.__init__(self)
 
-
         self.original_masses = np.copy(self.sim.model.body_mass[1:])
-        print("MASSES:", self.original_masses)
-# Default link masses
+        self.include_goal_in_obs = include_goal_in_obs
+        self.target_xy = target_xy  # externally passed fixed target (x, y) or None
 
-        if domain == 'source':  # Source environment has an imprecise torso mass (-30% shift)
+        if domain == 'source':
             self.sim.model.body_mass[1] *= 0.7
 
     def set_random_parameters(self):
@@ -53,41 +52,50 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
 
     def step(self, a):
-        """Step the simulation to the next timestep
-
-        Parameters
-        ----------
-        a : ndarray,
-            action to be taken at the current timestep
-        """
         posbefore = self.sim.data.qpos[0]
         self.do_simulation(a, self.frame_skip)
-        posafter, height, ang = self.sim.data.qpos[0:3]
-        alive_bonus = 1.0
-        reward = (posafter - posbefore) / self.dt
-        reward += alive_bonus
-        reward -= 1e-3 * np.square(a).sum()
-        s = self.state_vector()
-        done = not (np.isfinite(s).all() and (np.abs(s[2:]) < 100).all() and (height > .7) and (abs(ang) < .2))
-        ob = self._get_obs()
+        xpos, ypos, height, ang = self.sim.data.qpos[0:4]
 
-        return ob, reward, done, {}
+        # Reward: encourage moving toward goal
+        distance_to_goal = np.linalg.norm(np.array([xpos, ypos]) - self.target_xy)
+        reward = -distance_to_goal
+        reward += 1.0 if distance_to_goal < 0.5 else 0.0  # bonus for getting close
+        reward -= 1e-3 * np.square(a).sum()  # small penalty for large actions
+
+        s = self.state_vector()
+        done = not (
+            np.isfinite(s).all() and
+            (np.abs(s[2:]) < 100).all() and
+            (height > .7) and (abs(ang) < .2)
+        )
+        ob = self._get_obs()
+        return ob, reward, done, {'goal': self.target_xy}
+
 
 
     def _get_obs(self):
-        """Get current state"""
-        return np.concatenate([
-            self.sim.data.qpos.flat[1:],
+        base_obs = np.concatenate([
+            self.sim.data.qpos.flat[1:],  # exclude x pos
             self.sim.data.qvel.flat
         ])
+        if self.include_goal_in_obs:
+            xpos, ypos = self.sim.data.qpos[0], self.sim.data.qpos[1]
+            rel_goal = self.target_xy - np.array([xpos, ypos])
+            return np.concatenate([base_obs, rel_goal])
+        return base_obs
 
 
     def reset_model(self):
-        """Reset the environment to a random initial state"""
+        """Reset the environment to a random initial state and sample new target."""
         qpos = self.init_qpos + self.np_random.uniform(low=-.005, high=.005, size=self.model.nq)
         qvel = self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
         self.set_state(qpos, qvel)
-        return self._get_obs()
+
+        # Sample a new (x, y) goal if not provided
+        if self.target_xy is None:
+            self.target_xy = self.np_random.uniform(low=[10.0, 10.0], high=[10.0, 10.0])
+
+        return self._get_obs())
 
 
    
