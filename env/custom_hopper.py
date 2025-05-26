@@ -119,7 +119,8 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
                 (np.abs(s[2:]) < 100).all() and
                 (height > .7) and (abs(ang) < .2)
             )
-    
+            print(f"Reset attempt: height={height}, angle={ang}, done={done}")
+
             if not done:
                 return self._get_obs()
     
