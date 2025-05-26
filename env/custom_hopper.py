@@ -111,7 +111,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
             # Sample a new goal
             self.target_xy = self.np_random.uniform(low=[1.5, -3.0], high=[10.0, 3.0])
     
-            # Simulate one step with no action to evaluate state validity
+            # Check if this state is valid (not 'done')
             xpos, ypos, height, ang = self.sim.data.qpos[0:4]
             s = self.state_vector()
             done = not (
@@ -123,9 +123,10 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
             if not done:
                 return self._get_obs()
     
-        raise RuntimeError("Failed to sample a valid initial state after 100 tries")
-
-   
+        raise RuntimeError("Failed to sample a valid initial state after 100 tries.")
+    
+    
+       
 
 
     def viewer_setup(self):
