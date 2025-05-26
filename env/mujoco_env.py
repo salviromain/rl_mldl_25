@@ -79,7 +79,7 @@ class MujocoEnv(gym.Env):
             ET.SubElement(worldbody, 'geom', attrib={
                 'name': f'rand_cylinder_{i}',
                 'type': 'cylinder',
-                'size': '0.1 0.2',
+                'size': '0.025 0.05',
                 'pos': f'{x:.2f} 0 0.2',
                 'rgba': '0.5 0.5 0.5 1',
                 'contype': '1',
