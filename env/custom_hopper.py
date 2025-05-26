@@ -85,7 +85,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         done = not (
             np.isfinite(s).all() and
             (np.abs(s[2:]) < 100).all() and
-            (height > .7) and (abs(ang) < .2)
+            (height > .6) and (abs(ang) < .25)
         )
         ob = self._get_obs()
         return ob, reward, done, {'goal': self.target_xy}
