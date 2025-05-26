@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
 # Start new wandb run with that name
         wandb.init(
-            project="hopper-rl-gridsearch",
+            project="envrand",
             name=run_name,
             config=config,
             reinit=True,
