@@ -55,13 +55,25 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         posbefore = self.sim.data.qpos[0]
         self.do_simulation(a, self.frame_skip)
         xpos, ypos, height, ang = self.sim.data.qpos[0:4]
-
-        # Reward: encourage moving toward goal
+    
         distance_to_goal = np.linalg.norm(np.array([xpos, ypos]) - self.target_xy)
+        
+        # Main reward: encourage reaching goal
         reward = -distance_to_goal
-        reward += 1.0 if distance_to_goal < 0.5 else 0.0  # bonus for getting close
-        reward -= 1e-3 * np.square(a).sum()  # small penalty for large actions
-
+    
+        # Bonus for getting very close
+        if distance_to_goal < 0.5:
+            reward += 1.0
+    
+        # Penalize large actions
+        reward -= 1e-3 * np.square(a).sum()
+    
+        # Encourage progress (speed) toward goal
+        progress = (xpos - posbefore)
+        reward += 0.1 * progress
+    
+        # Penalize collisions
+    
         s = self.state_vector()
         done = not (
             np.isfinite(s).all() and
@@ -70,6 +82,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         )
         ob = self._get_obs()
         return ob, reward, done, {'goal': self.target_xy}
+
 
 
 
