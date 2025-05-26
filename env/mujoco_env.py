@@ -63,41 +63,39 @@ class MujocoEnv(gym.Env):
         self.seed()
    
 
+
     
-    import xml.etree.ElementTree as ET
-import tempfile
-
-def build_model(self):
-    xml_path = os.path.join(os.path.dirname(__file__), "assets/hopper.xml")
-    tree = ET.parse(xml_path)
-    root = tree.getroot()
-
-    worldbody = root.find('worldbody')
-
-    num_cylinders = 10
-    x_positions = np.random.uniform(0, 50, size=num_cylinders)
-
-    for i, x in enumerate(x_positions):
-        ET.SubElement(worldbody, 'geom', attrib={
-            'name': f'rand_cylinder_{i}',
-            'type': 'cylinder',
-            'size': '0.1 0.2',
-            'pos': f'{x:.2f} 0 0.2',
-            'rgba': '0.5 0.5 0.5 1',
-            'contype': '1',
-            'conaffinity': '1',
-            'condim': '3'
-        })
-
-    # Create a named temporary file in text mode
-    with tempfile.NamedTemporaryFile(mode='w', suffix=".xml", delete=False) as tmp_file:
-        tmp_path = tmp_file.name
-        tree.write(tmp_file, encoding='unicode')
-
-    self.model = mujoco_py.load_model_from_path(tmp_path)
-    self.sim = mujoco_py.MjSim(self.model)
-    self.viewer = None
-    self._viewers = {}
+    def build_model(self):
+        xml_path = os.path.join(os.path.dirname(__file__), "assets/hopper.xml")
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+    
+        worldbody = root.find('worldbody')
+    
+        num_cylinders = 10
+        x_positions = np.random.uniform(0, 50, size=num_cylinders)
+    
+        for i, x in enumerate(x_positions):
+            ET.SubElement(worldbody, 'geom', attrib={
+                'name': f'rand_cylinder_{i}',
+                'type': 'cylinder',
+                'size': '0.1 0.2',
+                'pos': f'{x:.2f} 0 0.2',
+                'rgba': '0.5 0.5 0.5 1',
+                'contype': '1',
+                'conaffinity': '1',
+                'condim': '3'
+            })
+    
+        # Create a named temporary file in text mode
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".xml", delete=False) as tmp_file:
+            tmp_path = tmp_file.name
+            tree.write(tmp_file, encoding='unicode')
+    
+        self.model = mujoco_py.load_model_from_path(tmp_path)
+        self.sim = mujoco_py.MjSim(self.model)
+        self.viewer = None
+        self._viewers = {}
 
     def _set_action_space(self):
         bounds = self.model.actuator_ctrlrange.copy().astype(np.float32)
