@@ -12,23 +12,14 @@ from .mujoco_env import MujocoEnv
 
 
 class CustomHopper(MujocoEnv, utils.EzPickle):
-    def __init__(self, domain=None, target_xy=None, include_goal_in_obs=True):
-        self.target_xy = target_xy if target_xy is not None else np.array([10.0, 0.0])
-        self.include_goal_in_obs = include_goal_in_obs
-
-        # Let MujocoEnv init first (so reset_model gets correctly bound)
+    def __init__(self, domain=None):
         MujocoEnv.__init__(self, 4)
-
-        # NOW you're safe to call reset (this will use your overridden reset_model)
-        self.reset()  
-
-        # Your stuff after init
         utils.EzPickle.__init__(self)
+    
+        # Now it's safe to access self.sim and self.init_qpos
         self.original_masses = np.copy(self.sim.model.body_mass[1:])
-
         if domain == 'source':
             self.sim.model.body_mass[1] *= 0.7
-
 
     def set_random_parameters(self):
         """Set random masses"""
