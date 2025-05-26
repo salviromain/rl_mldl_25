@@ -24,11 +24,13 @@ class WandbLoggingCallback(BaseCallback):
         return True
 
 # === Environment setup ===
+
 def make_env():
-    #env = gym.make('CustomHopper-target-v0')
-    env = gym.make('CustomHopper-source-v0')
-    env = Monitor(env)
-    return env
+    def _init():
+        env = CustomHopper( include_goal_in_obs=True)
+        env = Monitor(env)
+        return env
+    return _init
 
 # === Training loop ===
 def train(config):
