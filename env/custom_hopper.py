@@ -63,32 +63,62 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
             return np.concatenate([base_obs, rel_goal])
         return base_obs
 
-    def step(self, action):
-        pos_before = self.sim.data.qpos[0]
-        self.do_simulation(action, self.frame_skip)
-        xpos, ypos = self.sim.data.qpos[0:2]
-        height, angle = self.sim.data.qpos[1:3]
-
-        # Compute reward
-        dist_to_goal = np.linalg.norm(np.array([xpos, ypos]) - self.target_xy)
-        reward = -dist_to_goal  # minimize distance
-        if dist_to_goal < 0.5:
-            reward += 1.0  # bonus
-        reward += 0.1 * (xpos - pos_before)  # forward motion bonus
-        reward -= 1e-3 * np.square(action).sum()  # control penalty
-
-        # Done if unstable
-        state = self.state_vector()
+    def step(self, a):
+        """
+        Step the simulation forward one timestep.
+    
+        Parameters
+        ----------
+        a : ndarray
+            Action to be taken at the current timestep.
+    
+        Returns
+        -------
+        ob : ndarray
+            Observation after action.
+        reward : float
+            Reward after action.
+        done : bool
+            Whether the episode has ended.
+        info : dict
+            Additional info.
+        """
+        pos_before = self.sim.data.qpos[0:2].copy()  # x, y position (forward + lateral)
+        self.do_simulation(a, self.frame_skip)
+        pos_after = self.sim.data.qpos[0:2]  # x, y position after step
+    
+        # Calculate velocity magnitude projected on ground plane (x-y)
+        velocity_xy = (pos_after - pos_before) / self.dt
+        forward_vel = velocity_xy[0]  # x velocity component (forward)
+        lateral_vel = velocity_xy[1]  # y velocity component (sideways)
+    
+        # Reward: forward velocity plus alive bonus minus control cost
+        alive_bonus = 1.0
+        reward = forward_vel + alive_bonus - 1e-3 * np.square(a).sum()
+    
+        # Height and orientation for termination
+        height = self.sim.data.qpos[1]  # z position (height)
+        
+        # Orientation quaternion of the torso (body 1)
+        quat = self.sim.data.xquat[1]  # Quaternion of torso
+        # Convert quaternion to Euler angles (roll, pitch, yaw)
+        from mujoco_py import functions
+        rpy = functions.quat2euler(quat)
+        roll, pitch, yaw = rpy  # in radians
+    
+        # Terminate if:
+        # - height is too low (falling)
+        # - roll or pitch exceed threshold (lost balance)
+        # Note: yaw can freely rotate since turning is allowed
         done = not (
-            np.isfinite(state).all() and
-            (height > 0.7) and
-            (abs(angle) < 0.2)
+            np.isfinite(self.state_vector()).all() and
+            (np.abs(roll) < 0.5) and  # ~28 degrees
+            (np.abs(pitch) < 0.5) and  # ~28 degrees
+            (height > 0.7)
         )
-
-        return self._get_obs(), reward, done, {
-            "goal": self.target_xy,
-            "distance": dist_to_goal
-        }
+    
+        ob = self._get_obs()
+        return ob, reward, done, {}
 
     def viewer_setup(self):
         self.viewer.cam.trackbodyid = 2
