@@ -87,7 +87,7 @@ class MujocoEnv(gym.Env):
                 'type': 'cylinder',
                 'size':  f'{c:.2f} {h:.2f}',
                 'pos': f'{x:.2f} {y:.2f} 0',
-                'rgba': '1 0.3 0.3 1',
+                'rgba': '0.55 0.27 0.07 1'
                 'contype': '1',
                 'conaffinity': '1',
                 'condim': '3'
