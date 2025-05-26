@@ -8,7 +8,8 @@ from gym import error, spaces
 from gym.utils import seeding
 import numpy as np
 import gym
-
+import tempfile
+import xml.etree.ElementTree as ET
 try:
     import mujoco_py
 except ImportError as e:
@@ -60,9 +61,51 @@ class MujocoEnv(gym.Env):
         self._set_observation_space(observation)
 
         self.seed()
+   
 
+    
     def build_model(self):
-        self.model = mujoco_py.load_model_from_path(os.path.join(os.path.dirname(__file__), "assets/hopper.xml"))
+        # Load the original XML
+        xml_path = os.path.join(os.path.dirname(__file__), "assets/hopper.xml")
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+    
+        # Modify the worldbody to insert random cylinders
+        worldbody = root.find('worldbody')
+    
+        num_cylinders = 10
+        x_positions = np.random.uniform(0, 50, size=num_cylinders)
+    
+        for i, x in enumerate(x_positions):
+            ET.SubElement(worldbody, 'geom', attrib={
+                'name': f'rand_cylinder_{i}',
+                'type': 'cylinder',
+                'size': '0.1 0.2',         # radius, half-height
+                'pos': f'{x:.2f} 0 0.2',   # x, y, z — placed slightly above ground
+                'rgba': '0.5 0.5 0.5 1',
+                'contype': '1',
+                'conaffinity': '1',
+                'condim': '3'
+            })
+    
+        # Save modified XML to a temporary file
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix=".xml")
+        with os.fdopen(tmp_fd, 'w') as tmp_file:
+            tree.write(tmp_file)
+    
+        # Use standard model loading with your original setup
+        self.model = mujoco_py.load_model_from_path(tmp_path)
+        self.sim = mujoco_py.MjSim(self.model)
+        self.viewer = None
+        self._viewers = {}
+    
+    
+        # Save to a temporary file
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix=".xml")
+        with os.fdopen(tmp_fd, 'w') as tmp_file:
+            tree.write(tmp_file)
+    
+        self.model = mujoco_py.load_model_from_path(tmp_path)
         self.sim = mujoco_py.MjSim(self.model)
         self.viewer = None
         self._viewers = {}
