@@ -109,10 +109,6 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         """Reset the environment to a valid initial state and sample new target."""
         max_tries = 100
         for _ in range(max_tries):
-            qpos = self.init_qpos + self.np_random.uniform(low=-.005, high=.005, size=self.model.nq)
-            qvel = self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
-            self.set_state(qpos, qvel)
-    
             # Sample a new goal
             self.target_xy = self.np_random.uniform(low=[1.5, -3.0], high=[10.0, 3.0])
     
