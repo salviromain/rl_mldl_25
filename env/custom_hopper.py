@@ -17,6 +17,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         self.include_goal_in_obs = include_goal_in_obs
     
         MujocoEnv.__init__(self, 4)
+        self.reset()  
         utils.EzPickle.__init__(self)
     
         self.original_masses = np.copy(self.sim.model.body_mass[1:])
