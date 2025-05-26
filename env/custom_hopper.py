@@ -63,62 +63,35 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
             return np.concatenate([base_obs, rel_goal])
         return base_obs
 
+    from mujoco_py import functions
+
     def step(self, a):
-        """
-        Step the simulation forward one timestep.
-    
-        Parameters
-        ----------
-        a : ndarray
-            Action to be taken at the current timestep.
-    
-        Returns
-        -------
-        ob : ndarray
-            Observation after action.
-        reward : float
-            Reward after action.
-        done : bool
-            Whether the episode has ended.
-        info : dict
-            Additional info.
-        """
-        pos_before = self.sim.data.qpos[0:2].copy()  # x, y position (forward + lateral)
+        pos_before = self.sim.data.qpos[0:2].copy()
         self.do_simulation(a, self.frame_skip)
-        pos_after = self.sim.data.qpos[0:2]  # x, y position after step
+        pos_after = self.sim.data.qpos[0:2]
     
-        # Calculate velocity magnitude projected on ground plane (x-y)
         velocity_xy = (pos_after - pos_before) / self.dt
-        forward_vel = velocity_xy[0]  # x velocity component (forward)
-        lateral_vel = velocity_xy[1]  # y velocity component (sideways)
+        forward_vel = velocity_xy[0]
     
-        # Reward: forward velocity plus alive bonus minus control cost
         alive_bonus = 1.0
         reward = forward_vel + alive_bonus - 1e-3 * np.square(a).sum()
     
-        # Height and orientation for termination
-        height = self.sim.data.qpos[1]  # z position (height)
+        height = self.sim.data.qpos[1]
         
-        # Orientation quaternion of the torso (body 1)
-        quat = self.sim.data.xquat[1]  # Quaternion of torso
-        # Convert quaternion to Euler angles (roll, pitch, yaw)
-        from mujoco_py import functions
+        quat = self.sim.data.body_xquat[self.model.body_name2id("torso")]
         rpy = functions.quat2euler(quat)
-        roll, pitch, yaw = rpy  # in radians
+        roll, pitch, yaw = rpy
     
-        # Terminate if:
-        # - height is too low (falling)
-        # - roll or pitch exceed threshold (lost balance)
-        # Note: yaw can freely rotate since turning is allowed
         done = not (
             np.isfinite(self.state_vector()).all() and
-            (np.abs(roll) < 0.5) and  # ~28 degrees
-            (np.abs(pitch) < 0.5) and  # ~28 degrees
+            (np.abs(roll) < 0.5) and
+            (np.abs(pitch) < 0.5) and
             (height > 0.7)
         )
     
         ob = self._get_obs()
         return ob, reward, done, {}
+
 
     def viewer_setup(self):
         self.viewer.cam.trackbodyid = 2
