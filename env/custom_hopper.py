@@ -112,8 +112,9 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
             self.target_xy = self.np_random.uniform(low=[1.5, -3.0], high=[10.0, 3.0])
     
             # Sample initial state
-            qpos = self.init_qpos + self.np_random.uniform(low=-0.01, high=0.01, size=self.init_qpos.shape)
-            qvel = self.init_qvel + self.np_random.uniform(low=-0.01, high=0.01, size=self.init_qvel.shape)
+            qpos = self.init_qpos + self.np_random.uniform(low=-.005, high=.005, size=self.model.nq)
+            qvel = self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
+            self.set_state(qpos, qvel)
     
             # Set state
             self.set_state(qpos, qvel)
