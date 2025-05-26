@@ -93,7 +93,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
         # Sample a new (x, y) goal if not provided
         if self.target_xy is None:
-            self.target_xy = self.np_random.uniform(low=[10.0, 10.0], high=[10.0, 10.0])
+            self.target_xy = self.np_random.uniform(low=[1.5,-3.0], high=[10.0, 3.0])
 
         return self._get_obs())
 
