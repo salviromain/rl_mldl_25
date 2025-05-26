@@ -13,16 +13,18 @@ from .mujoco_env import MujocoEnv
 
 class CustomHopper(MujocoEnv, utils.EzPickle):
     def __init__(self, domain=None, target_xy=None, include_goal_in_obs=True):
-        MujocoEnv.__init__(self, 4)
-        utils.EzPickle.__init__(self)
-        
         self.target_xy = target_xy if target_xy is not None else np.array([10.0, 0.0])
         self.include_goal_in_obs = include_goal_in_obs
+        
+        # Now safe to initialize MujocoEnv, which may call step()
+        MujocoEnv.__init__(self, 4)
+        utils.EzPickle.__init__(self)
         
         self.original_masses = np.copy(self.sim.model.body_mass[1:])
         
         if domain == 'source':
             self.sim.model.body_mass[1] *= 0.7
+
     def set_random_parameters(self):
         """Set random masses"""
         self.set_parameters(self.sample_parameters())
