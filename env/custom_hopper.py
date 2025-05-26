@@ -104,13 +104,11 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         qpos = self.init_qpos + self.np_random.uniform(low=-.005, high=.005, size=self.model.nq)
         qvel = self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
         self.set_state(qpos, qvel)
-
-        # Sample a new (x, y) goal if not provided
-        if self.target_xy is None:
-            self.target_xy = self.np_random.uniform(low=[1.5,-3.0], high=[10.0, 3.0])
-
+    
+        # Always sample a new (x, y) goal at every reset
+        self.target_xy = self.np_random.uniform(low=[1.5, -3.0], high=[10.0, 3.0])
+    
         return self._get_obs()
-
 
    
 
