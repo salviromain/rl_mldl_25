@@ -13,7 +13,7 @@ from .mujoco_env import MujocoEnv
 
 class CustomHopper(MujocoEnv, utils.EzPickle):
     def __init__(self, domain=None, target_xy=None, include_goal_in_obs=True):
-        self.target_xy = target_xy  # ✅ Set this BEFORE MujocoEnv init
+        self.target_xy = target_xy if target_xy is not None else np.array([10.0, 0.0])
         self.include_goal_in_obs = include_goal_in_obs
     
         MujocoEnv.__init__(self, 4)
