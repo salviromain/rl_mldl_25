@@ -101,15 +101,29 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
 
     def reset_model(self):
-        """Reset the environment to a random initial state and sample new target."""
-        qpos = self.init_qpos + self.np_random.uniform(low=-.005, high=.005, size=self.model.nq)
-        qvel = self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
-        self.set_state(qpos, qvel)
+        """Reset the environment to a valid initial state and sample new target."""
+        max_tries = 100
+        for _ in range(max_tries):
+            qpos = self.init_qpos + self.np_random.uniform(low=-.005, high=.005, size=self.model.nq)
+            qvel = self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
+            self.set_state(qpos, qvel)
     
-        # Always sample a new (x, y) goal at every reset
-        self.target_xy = self.np_random.uniform(low=[1.5, -3.0], high=[10.0, 3.0])
+            # Sample a new goal
+            self.target_xy = self.np_random.uniform(low=[1.5, -3.0], high=[10.0, 3.0])
     
-        return self._get_obs()
+            # Simulate one step with no action to evaluate state validity
+            xpos, ypos, height, ang = self.sim.data.qpos[0:4]
+            s = self.state_vector()
+            done = not (
+                np.isfinite(s).all() and
+                (np.abs(s[2:]) < 100).all() and
+                (height > .7) and (abs(ang) < .2)
+            )
+    
+            if not done:
+                return self._get_obs()
+    
+        raise RuntimeError("Failed to sample a valid initial state after 100 tries")
 
    
 
