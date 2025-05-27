@@ -120,6 +120,8 @@ gym.envs.register(
     id="CustomHopper-v0",
     entry_point="env.custom_hopper:CustomHopper",  # Adjust the module path as needed
     max_episode_steps=500,
+    kwargs={"domain": "source", "include_goal_in_obs": True}
+
 )
 
 gym.envs.register(
