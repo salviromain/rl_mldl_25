@@ -29,7 +29,7 @@ class WandbLoggingCallback(BaseCallback):
 
 
 # === Environment setup ===
-def make_env(env_id='CustomHopper-source-v0'):
+def make_env(env_id='CustomHopper-v0'):
     def _init():
         env = gym.make(env_id)
         env = Monitor(env)
