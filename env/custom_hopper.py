@@ -40,8 +40,8 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
     def reset_model(self):
         # Sample a new goal for this episode
-        self.target_xy = self.np_random.uniform(low=[5.0, -2.0], high=[10.0, 2.0])
-        print(self.target_xy)
+        self.target_xy = self.np_random.uniform(low=[5.0, -4.0], high=[10.0, 4.0])
+        #print(self.target_xy)
 
         # Reset state
         qpos = self.init_qpos + self.np_random.uniform(low=-0.005, high=0.005, size=self.model.nq)
