@@ -66,23 +66,35 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
     from mujoco_py import functions
 
-    def step(self, a):
+   def step(self, a):
         pos_before = self.sim.data.qpos[0:2].copy()
+        dist_before = np.linalg.norm(self.target_xy - pos_before)
+    
         self.do_simulation(a, self.frame_skip)
+    
         pos_after = self.sim.data.qpos[0:2]
+        dist_after = np.linalg.norm(self.target_xy - pos_after)
     
-        velocity_xy = (pos_after - pos_before) / self.dt
-        forward_vel = velocity_xy[0]
+        # Progress is how much closer we got to the goal
+        progress_reward = dist_before - dist_after
     
+        # Velocity toward the goal
+        velocity = (pos_after - pos_before) / self.dt
+        direction_to_goal = (self.target_xy - pos_before)
+        if np.linalg.norm(direction_to_goal) > 1e-6:
+            direction_to_goal /= np.linalg.norm(direction_to_goal)
+        speed_toward_goal = np.dot(velocity, direction_to_goal)
+    
+        # Alive bonus and action penalty
         alive_bonus = 1.0
-        reward = forward_vel + alive_bonus - 1e-3 * np.square(a).sum()
+        action_penalty = 1e-3 * np.square(a).sum()
     
+        # Final reward
+        reward = 2.0 * progress_reward + 0.5 * speed_toward_goal + alive_bonus - action_penalty
+    
+        # Check termination conditions
         height = self.sim.data.qpos[1]
-    
-        # Get torso rotation matrix (3x3)
         rot_mat = self.sim.data.body_xmat[self.model.body_name2id("torso")].reshape(3, 3)
-    
-        # Calculate roll and pitch from rotation matrix
         roll = np.arctan2(rot_mat[2,1], rot_mat[2,2])
         pitch = np.arctan2(-rot_mat[2,0], np.sqrt(rot_mat[2,1]**2 + rot_mat[2,2]**2))
     
