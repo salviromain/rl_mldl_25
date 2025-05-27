@@ -95,10 +95,10 @@ if __name__ == "__main__":
             "timesteps": timesteps
         }
 
-        run_name = f"lr_{lr}-source"
+        run_name = f"randenv-source"
 
         wandb.init(
-            project="hopper-rl-gridsearch",
+            project="randenv",
             name=run_name,
             config=config,
             reinit=True,
