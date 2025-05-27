@@ -66,7 +66,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
     from mujoco_py import functions
 
-   def step(self, a):
+    def step(self, a):
         pos_before = self.sim.data.qpos[0:2].copy()
         dist_before = np.linalg.norm(self.target_xy - pos_before)
     
