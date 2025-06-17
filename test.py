@@ -56,6 +56,7 @@ def main():
     mean = rewards.mean()
     std = rewards.std()
     np.save("REINFORCE2.npy",rewards)
+    print("SAVED")
 
     plt.figure(figsize=(10, 5))
     plt.plot(episodes, rewards, label='Episode Return')
