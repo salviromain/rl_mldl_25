@@ -72,26 +72,7 @@ class MujocoEnv(gym.Env):
     
         worldbody = root.find('worldbody')
     
-        num_cylinders = 250
-        x_positions = np.random.uniform(-10, 10, size=num_cylinders)
-        y_positions = np.random.uniform(-10, 10, size=num_cylinders)
         
-        circumf = np.random.uniform(0.005,0.14, size=num_cylinders)
-        heights = np.random.uniform(0.005,0.19, size=num_cylinders)
-        
-
-        
-        for i, (x, y, c, h) in enumerate(zip(x_positions, y_positions, circumf, heights)):
-            ET.SubElement(worldbody, 'geom', attrib={
-                'name': f'rand_cylinder_{i}',
-                'type': 'cylinder',
-                'size':  f'{c:.2f} {h:.2f}',
-                'pos': f'{x:.2f} {y:.2f} 0',
-                'rgba': '0.55 0.27 0.07 1',
-                'contype': '1',
-                'conaffinity': '1',
-                'condim': '3'
-            })
             
         # Create a named temporary file in text mode
         with tempfile.NamedTemporaryFile(mode='w', suffix=".xml", delete=False) as tmp_file:
