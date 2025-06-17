@@ -55,7 +55,7 @@ def main():
     rewards = np.array(rewards)
     mean = rewards.mean()
     std = rewards.std()
-    #np.save("REINFORCE.npy",rewards)
+    np.save("REINFORCE2.npy",rewards)
 
     plt.figure(figsize=(10, 5))
     plt.plot(episodes, rewards, label='Episode Return')
@@ -68,7 +68,7 @@ def main():
     plt.grid(True)
 
     # Save the plot
-    plt.savefig(args.save_path)
+    #plt.savefig(args.save_path)
     print(f"Saved reward plot to: {args.save_path}")
     plt.close()
 
