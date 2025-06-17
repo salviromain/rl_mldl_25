@@ -18,7 +18,7 @@ args = parse_args()
 def main():
     #env = gym.make('CustomHopper-source-v0')
     env = gym.make('CustomHopper-target-v0')
-
+    list_values=[]
     print('Action space:', env.action_space)
     print('State space:', env.observation_space)
     print('Dynamics parameters:', env.get_parameters())
@@ -39,6 +39,9 @@ def main():
             test_reward += reward
 
         print(f"Episode: {episode + 1} | Return: {test_reward}")
+    arr = np.array(list_values)
+    np.save('PPOST.npy', arr)
+
 
 if __name__ == '__main__':
     main()
