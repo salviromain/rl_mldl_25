@@ -37,11 +37,11 @@ def main():
             if args.render:
                 env.render()
             test_reward += reward
-        liat_values.append(test_reward)
+        list_values.append(test_reward)
 
         print(f"Episode: {episode + 1} | Return: {test_reward}")
     arr = np.array(list_values)
-    np.save('PPOST.npy', arr)
+    np.save('PPOST2.npy', arr)
 
 
 if __name__ == '__main__':
