@@ -2,7 +2,7 @@
 
 ### General Description
 
-This repository, originally forked from `quadruped-rl-locomotion`, contains the complete implementation developed by Group 4 (Salvi, Sernia, Vittimberga, Zoccatelli) for Tasks 2–6 of the *Machine Learning and Deep Learning* course, part of the Master's program in Data Science and Engineering at Politecnico di Torino.
+This repository, originally forked from [rl_mldl_25](https://github.com/lambdavi/rl_mldl_25), contains the complete implementation developed by Group 4 (Salvi, Sernia, Vittimberga, Zoccatelli) for Tasks 2–6 of the *Machine Learning and Deep Learning* course, Master's program in Data Science and Engineering at Politecnico di Torino.
 
 ## Repository Structure and Branches
 
