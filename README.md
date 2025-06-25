@@ -23,14 +23,17 @@ To reproduce the results shown in `Report.pdf`, use the following commands:
 - **REINFORCE model** (in the `REINFORCE-PPO` branch):
 
   ```bash
-python test.py  --model <path_to_model_mdl> --episodes 500 ```  
+  python test.py --model <path_to_model_mdl> --episodes 500
+  ```
+
 - **Actor-Critic model** (in the `ActorCritic` branch):
 
   ```bash
-  python test.py  --model <path_to_model_mdl> --episodes 500
+  python test.py --model <path_to_model_mdl> --episodes 500
   ```
+
 - **PPO with UDR** (in the `PPO-UDR` branch):
 
   ```bash
-   python testppo.py --model <path_to_model_zip> --episodes 500 --render True
+  python testppo.py --model <path_to_model_zip> --episodes 500 --render True
   ```
