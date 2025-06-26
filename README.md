@@ -4,6 +4,8 @@
 
 This repository, originally forked from [rl_mldl_25](https://github.com/lambdavi/rl_mldl_25), contains the complete implementation developed by Group 4 (Salvi, Sernia, Vittimberga, Zoccatelli) for Tasks 2–6 of the *Machine Learning and Deep Learning* course, Master's program in Data Science and Engineering at Politecnico di Torino.
 
+To view the `Report` with hyperlinks working correctly, download at this [link](https://github.com/salviromain/rl_mldl_25/raw/main/Report.pdf)
+
 ## Repository Structure and Branches
 
 Three branches were created from the `main` branch, each corresponding to specific tasks:
